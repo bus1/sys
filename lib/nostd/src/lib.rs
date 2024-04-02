@@ -1,0 +1,20 @@
+//! # Capability-based Standard System Interfaces
+//!
+//! This library provides standard system interfaces following a
+//! capability-based design. It does not require any particular runtime,
+//! but can optionally be combined with the Rust Standard Library.
+
+#![no_std]
+
+extern crate alloc;
+extern crate core;
+
+#[cfg(any(test, feature = "std"))]
+extern crate std;
+
+pub mod align;
+pub mod compat;
+pub mod error;
+pub mod hash;
+pub mod hmac;
+pub mod str;

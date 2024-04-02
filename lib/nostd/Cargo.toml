@@ -1,0 +1,21 @@
+[package]
+name = "nostd"
+version = "0.0.1"
+
+description = "Capability-based Standard System Interfaces"
+keywords = [
+        "capability-based",
+        "operating-system",
+        "system-call",
+]
+
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+std = []
