@@ -41,7 +41,7 @@ pub trait Engine {
         while length > 0 {
             let n = core::cmp::min(length, 128);
             self.push(&[0u8; 128][0..n]);
-            length = length - n;
+            length -= n;
         }
     }
 

@@ -175,7 +175,7 @@ impl crate::hash::Engine for Engine {
     }
 
     fn push(&mut self, mut data: &[u8]) {
-        while data.len() > 0 {
+        while !data.is_empty() {
             // Copy as much as possible into the remaining space of the
             // stream buffer, and adjust `data` accordingly.
             let n = core::cmp::min(self.remaining, data.len());
@@ -233,7 +233,7 @@ impl crate::hash::Engine for Engine {
         // 0-bits until the next byte boundary.
         assert_ne!(self.remaining, 0);
         self.chunk[self.chunk.len() - self.remaining] = 0x80u8;
-        self.remaining = self.remaining - 1;
+        self.remaining -= 1;
 
         // Now pad with 0-bytes until the chunk is full, except for 8 final
         // bytes. Those take the total size in bits. If it does not fit into

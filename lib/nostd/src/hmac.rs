@@ -76,7 +76,7 @@ where
     /// Push the given bytes into the engine. In most cases, the engine will
     /// buffer data up to a fixed limit before processing it.
     pub fn push(&mut self, data: &[u8]) {
-        if data.len() > 0 {
+        if !data.is_empty() {
             if self.engine.is_reset() {
                 self.engine.push(&self.ipad);
             }

@@ -64,13 +64,12 @@ pub fn cmp_natural(
         // different strings can map to the same u64, so even if both u64s
         // are equal, we have to continue comparing their original string
         // representation.
-        match (l_u64, r_u64) {
-            (Ok(l), Ok(r)) => match l.cmp(&r) {
+        if let (Ok(l), Ok(r)) = (l_u64, r_u64) {
+            match l.cmp(&r) {
                 v @ core::cmp::Ordering::Less => return v,
                 v @ core::cmp::Ordering::Greater => return v,
                 _ => {},
-            },
-            _ => {},
+            }
         }
 
         // Compare the digit-only prefix as string.
