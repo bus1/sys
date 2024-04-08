@@ -1,4 +1,4 @@
-# Nostd/Sys - Capability-based OS Interfaces
+# Nostd/Sys - Capability-based System Interfaces
 
 ## CHANGES WITH 1.0.0:
 

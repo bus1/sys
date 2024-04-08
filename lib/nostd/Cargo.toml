@@ -2,11 +2,11 @@
 name = "nostd"
 version = "0.0.1"
 
-description = "Capability-based Standard System Interfaces"
+description = "Capability-based Standard Interfaces"
 keywords = [
-        "capability-based",
-        "operating-system",
-        "system-call",
+        "capability based",
+        "cross platform",
+        "standard interfaces",
 ]
 
 categories.workspace = true

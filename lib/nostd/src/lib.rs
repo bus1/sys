@@ -1,4 +1,4 @@
-//! # Capability-based Standard System Interfaces
+//! # Capability-based Standard Interfaces
 //!
 //! This library provides standard system interfaces following a
 //! capability-based design. It does not require any particular runtime,

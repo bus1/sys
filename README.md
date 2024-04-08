@@ -1,4 +1,4 @@
-# Nostd/Sys - Capability-based OS Interfaces
+# Nostd/Sys - Capability-based System Interfaces
 
 This is the home of the `nostd` and `sys` Rust packages. They provide access to
 a collection of common operating-system interfaces following a capability-based
