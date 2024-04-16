@@ -19,6 +19,15 @@ pub enum Uncaught {
     Error(Box<dyn std::error::Error>),
     #[cfg(not(feature = "std"))]
     Error(Box<dyn core::fmt::Display>),
+
+    StaticAny(&'static dyn core::any::Any),
+    StaticDebug(&'static dyn core::fmt::Debug),
+    StaticDisplay(&'static dyn core::fmt::Display),
+
+    #[cfg(feature = "std")]
+    StaticError(&'static dyn std::error::Error),
+    #[cfg(not(feature = "std"))]
+    StaticError(&'static dyn core::fmt::Display),
 }
 
 impl core::fmt::Debug for Uncaught {
@@ -35,6 +44,15 @@ impl core::fmt::Debug for Uncaught {
             Uncaught::Error(v) => write!(fmt, "Uncaught::Error({:?})", v),
             #[cfg(not(feature = "std"))]
             Uncaught::Error(v) => write!(fmt, "Uncaught::Error({})", v),
+
+            Uncaught::StaticAny(_) => write!(fmt, "Uncaught::StaticAny()"),
+            Uncaught::StaticDebug(v) => write!(fmt, "Uncaught::StaticDebug({:?})", v),
+            Uncaught::StaticDisplay(v) => write!(fmt, "Uncaught::StaticDisplay({})", v),
+
+            #[cfg(feature = "std")]
+            Uncaught::StaticError(v) => write!(fmt, "Uncaught::StaticError({:?})", v),
+            #[cfg(not(feature = "std"))]
+            Uncaught::StaticError(v) => write!(fmt, "Uncaught::StaticError({})", v),
         }
     }
 }
@@ -49,6 +67,11 @@ impl core::fmt::Display for Uncaught {
             Uncaught::Debug(v) => write!(fmt, "Uncaught(Debug): {:?}", v),
             Uncaught::Display(v) => write!(fmt, "Uncaught(Display): {}", v),
             Uncaught::Error(v) => write!(fmt, "Uncaught(Error): {}", v),
+
+            Uncaught::StaticAny(_) => write!(fmt, "Uncaught(StaticAny)"),
+            Uncaught::StaticDebug(v) => write!(fmt, "Uncaught(StaticDebug): {:?}", v),
+            Uncaught::StaticDisplay(v) => write!(fmt, "Uncaught(StaticDisplay): {}", v),
+            Uncaught::StaticError(v) => write!(fmt, "Uncaught(StaticError): {}", v),
         }
     }
 }
@@ -61,6 +84,10 @@ impl std::error::Error for Uncaught {
             Uncaught::Debug(_) => None,
             Uncaught::Display(_) => None,
             Uncaught::Error(v) => v.source(),
+            Uncaught::StaticAny(_) => None,
+            Uncaught::StaticDebug(_) => None,
+            Uncaught::StaticDisplay(_) => None,
+            Uncaught::StaticError(v) => v.source(),
         }
     }
 }
@@ -70,6 +97,12 @@ impl Uncaught {
     /// underlying element.
     pub fn fold_any(v: Box<dyn core::any::Any>) -> Self {
         Self::Any(v)
+    }
+
+    /// Fold anything into an uncaught error, exposing nothing of the
+    /// underlying element.
+    pub fn fold_static_any(v: &'static dyn core::any::Any) -> Self {
+        Self::StaticAny(v)
     }
 
     /// Box anything into an uncaught error, exposing nothing of the
@@ -87,6 +120,12 @@ impl Uncaught {
         Self::Debug(v)
     }
 
+    /// Fold any debuggable into an uncaught error, exposing only the
+    /// debug value.
+    pub fn fold_static_debug(v: &'static dyn core::fmt::Debug) -> Self {
+        Self::StaticDebug(v)
+    }
+
     /// Box any debuggable into an uncaught error, exposing only the
     /// debug value.
     pub fn box_debug<T>(v: T) -> Self
@@ -100,6 +139,12 @@ impl Uncaught {
     /// display value.
     pub fn fold_display(v: Box<dyn core::fmt::Display>) -> Self {
         Self::Display(v)
+    }
+
+    /// Fold any displayable into an uncaught error, exposing only the
+    /// display value.
+    pub fn fold_static_display(v: &'static dyn core::fmt::Display) -> Self {
+        Self::StaticDisplay(v)
     }
 
     /// Box any displayable into an uncaught error, exposing only the
@@ -126,6 +171,23 @@ impl Uncaught {
     #[cfg(not(feature = "std"))]
     pub fn fold_error(v: Box<dyn core::fmt::Display>) -> Self {
         Self::Error(v)
+    }
+
+    /// Take any error and fold it into an uncaught error, exposing the
+    /// full `Error` trait.
+    #[cfg(feature = "std")]
+    pub fn fold_static_error(v: &'static dyn std::error::Error) -> Self {
+        Self::StaticError(v)
+    }
+
+    /// Take any fallback error and fold it into an uncaught error, exposing
+    /// the full `Error` trait.
+    ///
+    /// This function is exposed if no `std` is used, and thus serves as
+    /// fallback when `std::error::Error` is not available.
+    #[cfg(not(feature = "std"))]
+    pub fn fold_static_error(v: &'static dyn core::fmt::Display) -> Self {
+        Self::StaticError(v)
     }
 
     /// Take any error and box it into an uncaught error, exposing the
