@@ -13,6 +13,7 @@ extern crate core;
 extern crate std;
 
 pub mod align;
+pub mod args;
 pub mod compat;
 pub mod error;
 pub mod hash;
