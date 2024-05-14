@@ -18,4 +18,5 @@ pub mod compat;
 pub mod error;
 pub mod hash;
 pub mod hmac;
+pub mod json;
 pub mod str;
