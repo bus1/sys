@@ -101,10 +101,10 @@ pub enum Token<'tk> {
     ObjectClose,
     /// JSON null keyword
     Null,
-    /// JSON true keyword
-    True,
     /// JSON false keyword
     False,
+    /// JSON true keyword
+    True,
     /// Block of continuous whitespace
     Whitespace {
         raw: Cow<'tk, str>,
@@ -229,8 +229,8 @@ impl<'tk> Token<'tk> {
             Token::ObjectOpen => Token::ObjectOpen,
             Token::ObjectClose => Token::ObjectClose,
             Token::Null => Token::Null,
-            Token::True => Token::True,
             Token::False => Token::False,
+            Token::True => Token::True,
             Token::Whitespace { raw } => Token::Whitespace {
                 raw: Cow::from(raw.into_owned()),
             },
@@ -340,8 +340,8 @@ impl Tokenizer {
     ) -> ControlFlow<R> {
         match self.acc.as_str() {
             "null" => self.report_token(report, Token::Null),
-            "true" => self.report_token(report, Token::True),
             "false" => self.report_token(report, Token::False),
+            "true" => self.report_token(report, Token::True),
             _ => self.report_error(report, Error::KeywordUnknown(Cow::from(&self.acc))),
         }
     }
@@ -1257,8 +1257,8 @@ mod tests {
             ("{", (ControlFlow::Continue(Status::Done), alloc::vec![Tk::T(Token::ObjectOpen)])),
             ("}", (ControlFlow::Continue(Status::Done), alloc::vec![Tk::T(Token::ObjectClose)])),
             ("null", (ControlFlow::Continue(Status::Done), alloc::vec![Tk::T(Token::Null)])),
-            ("true", (ControlFlow::Continue(Status::Done), alloc::vec![Tk::T(Token::True)])),
             ("false", (ControlFlow::Continue(Status::Done), alloc::vec![Tk::T(Token::False)])),
+            ("true", (ControlFlow::Continue(Status::Done), alloc::vec![Tk::T(Token::True)])),
             (" \n\r\t", (ControlFlow::Continue(Status::Done), alloc::vec![
                 Tk::T(Token::Whitespace { raw: Cow::from(" \n\r\t") }),
             ])),
