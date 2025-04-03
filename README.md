@@ -1,8 +1,10 @@
-# Nostd/Sys - Capability-based System Interfaces
+# Osi/Sys - Capability-based System Interfaces
 
-This is the home of the `nostd` and `sys` Rust packages. They provide access to
-a collection of common operating-system interfaces following a capability-based
-design.
+This is the home of the `osi` and `sys` Rust packages. They provide access to
+a wide collection of system-independent, as well as system-specific, interfaces
+following a capability-based design. The `osi` package provides portable
+interfaces (operating system independent), while the `sys` package provides
+system specific interfaces.
 
 ### Project
 
@@ -13,7 +15,7 @@ design.
 
 The requirements for this project are:
 
- * `rustc >= 1.77`
+ * `rustc >= 1.85`
 
 ### Repository:
 

@@ -1,11 +1,12 @@
 [package]
-name = "nostd"
+name = "osi"
 version = "0.0.1"
 
 description = "Capability-based Standard Interfaces"
 keywords = [
         "capability based",
         "cross platform",
+        "operating system independent",
         "standard interfaces",
 ]
 

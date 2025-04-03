@@ -46,7 +46,11 @@ impl OsStr {
     /// `std::ffi::OsStr::as_encoded_bytes()` (see its documentation for
     /// details on the allowed operations).
     pub unsafe fn from_encoded_bytes_unchecked(v: &[u8]) -> &Self {
-        core::mem::transmute(v)
+        unsafe {
+            // SAFETY: The caller guarantees that the passed value is either
+            //         valid UTF-8 or `encoded-bytes`.
+            core::mem::transmute(v)
+        }
     }
 
     /// Create an `OsStr` compatibility type from its `std` equivalent.

@@ -1,8 +1,8 @@
-# Nostd/Sys - Capability-based System Interfaces
+# Osi/Sys - Capability-based System Interfaces
 
 ## CHANGES WITH 1.0.0:
 
-        * Initial release of nostd/sys.
+        * Initial release of osi/sys.
 
         Contributions from: TBD
 

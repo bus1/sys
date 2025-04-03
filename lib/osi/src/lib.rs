@@ -1,8 +1,8 @@
 //! # Capability-based Standard Interfaces
 //!
-//! This library provides standard system interfaces following a
-//! capability-based design. It does not require any particular runtime,
-//! but can optionally be combined with the Rust Standard Library.
+//! This library provides operating system independent standard interfaces
+//! following a capability-based design. It does not require any particular
+//! runtime, but can optionally be combined with the Rust Standard Library.
 
 #![no_std]
 

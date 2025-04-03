@@ -1,6 +1,6 @@
 [workspace]
 members = ["lib/*"]
-resolver = "2"
+resolver = "3"
 
 default-members = [
         "lib/*",
@@ -11,12 +11,12 @@ categories = [
         "no-std",
         "os",
 ]
-edition = "2021"
+edition = "2024"
 homepage = "https://www.bus1.eu"
 license = "MIT OR Apache-2.0 OR LGPL-2.1-or-later"
 readme = "README.md"
 repository = "https://github.com/bus1/sys"
-rust-version = "1.77"
+rust-version = "1.85"
 
 [workspace.lints.clippy]
 identity_op = "allow"
