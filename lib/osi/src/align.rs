@@ -112,7 +112,7 @@ pub struct Align128 {}
 /// An implementation must guarantee that `Aligned::Align` is a ZST and has the
 /// same alignment requirements as `Self`.
 pub unsafe trait Aligned {
-    type Align: Sized;
+    type Align: Copy + Sized;
 }
 
 /// A ZST phantom marker that can be used to align structures to at least the
