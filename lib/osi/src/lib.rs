@@ -16,6 +16,7 @@ pub mod align;
 pub mod args;
 pub mod compat;
 pub mod error;
+pub mod ffi;
 pub mod hash;
 pub mod hmac;
 pub mod json;
