@@ -70,6 +70,55 @@ pub const unsafe fn transmute_copy_uninit<Src, Dst>(src: &Src) -> Dst {
     }
 }
 
+// Manually create a copy of `v`, reversing the order of all underlying bytes.
+// This is the slow-path that manually iterates the individual bytes, but works
+// with any data-type, as long as the data-type stays valid with swapped bytes.
+const unsafe fn bswap_slow<T: Copy>(v: T) -> T {
+    let mut r = core::mem::MaybeUninit::<T>::uninit();
+    let src = &v as *const T as *const u8;
+    let dst = r.as_mut_ptr() as *mut u8;
+
+    unsafe {
+        let mut i = 0;
+        while i < size_of::<T>() {
+            core::ptr::copy(
+                src.add(size_of::<T>() - i - 1),
+                dst.add(i),
+                1,
+            );
+            i += 1;
+        }
+
+        r.assume_init()
+    }
+}
+
+/// Reverse the order of all bytes in `v`.
+///
+/// This reverses the order of all bytes underlying the object `v`. That is,
+/// its last byte will be swapped with the first, its second to last byte
+/// will be swapped with the second, and so on. In case of an odd number of
+/// bytes, the middle byte will stay untouched.
+///
+/// ## Safety
+///
+/// The caller must guarantee that `T` remains valid after all bytes were
+/// swapped.
+pub const unsafe fn bswap<T: Copy>(v: T) -> T {
+    // SAFETY: The caller guarantees that `T` is valid with all bytes swapped.
+    //         And due to `T: Copy`, we can safely create memory copies.
+    unsafe {
+        match size_of::<T>() {
+            1 => transmute_copy(&v),
+            2 => transmute_copy(&u16::swap_bytes(transmute_copy(&v))),
+            4 => transmute_copy(&u32::swap_bytes(transmute_copy(&v))),
+            8 => transmute_copy(&u64::swap_bytes(transmute_copy(&v))),
+            16 => transmute_copy(&u128::swap_bytes(transmute_copy(&v))),
+            _ => bswap_slow(v),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -116,5 +165,16 @@ mod test {
         assert_eq!(ur, 71);
     }
 
+    // Verify basic byte swapping
+    #[test]
+    fn bswap_basic() {
+        unsafe {
+            assert_eq!(bswap(0x12u8), 0x12u8);
+            assert_eq!(bswap(0x1234u16), 0x3412u16);
+            assert_eq!(bswap(0x12345678u32), 0x78563412u32);
+            assert_eq!(bswap(0x0011223344556677u64), 0x7766554433221100u64);
+            assert_eq!(bswap(0x00112233445566778899101112131415u128), 0x15141312111099887766554433221100u128);
+            assert_eq!(bswap([0x00u8, 0x11u8, 0x22u8]), [0x22u8, 0x11u8, 0x00u8]);
+        }
     }
 }
