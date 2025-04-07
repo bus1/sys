@@ -134,13 +134,11 @@ macro_rules! implement_endian_identity {
         // SAFETY: Transmuting from/to itself is always safe.
         unsafe impl NativeEndian<$self> for $self {
             #[inline]
-            #[must_use]
             fn from_native(native: Self) -> Self {
                 native
             }
 
             #[inline(always)]
-            #[must_use]
             fn into_native(self) -> Self {
                 self
             }
@@ -244,7 +242,6 @@ where
 // Implement clone via propagation.
 impl<Raw: core::clone::Clone> core::clone::Clone for BigEndian<Raw> {
     #[inline]
-    #[must_use]
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
@@ -311,7 +308,6 @@ where
     Self: NativeEndian<Raw>,
     Raw: Copy + core::cmp::Ord,
 {
-    #[must_use]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.to_native().cmp(&other.to_native())
     }
@@ -323,7 +319,6 @@ where
     Self: NativeEndian<Raw>,
     Raw: Copy + core::cmp::PartialEq,
 {
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.to_native().eq(&other.to_native())
     }
@@ -335,7 +330,6 @@ where
     Self: NativeEndian<Raw>,
     Raw: Copy + core::cmp::PartialOrd,
 {
-    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.to_native().partial_cmp(&other.to_native())
     }
@@ -412,7 +406,6 @@ where
 // Implement clone via propagation.
 impl<Raw: core::clone::Clone> core::clone::Clone for LittleEndian<Raw> {
     #[inline]
-    #[must_use]
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
@@ -479,7 +472,6 @@ where
     Self: NativeEndian<Raw>,
     Raw: Copy + core::cmp::Ord,
 {
-    #[must_use]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.to_native().cmp(&other.to_native())
     }
@@ -491,7 +483,6 @@ where
     Self: NativeEndian<Raw>,
     Raw: Copy + core::cmp::PartialEq,
 {
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.to_native().eq(&other.to_native())
     }
@@ -503,7 +494,6 @@ where
     Self: NativeEndian<Raw>,
     Raw: Copy + core::cmp::PartialOrd,
 {
-    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.to_native().partial_cmp(&other.to_native())
     }
@@ -516,13 +506,11 @@ macro_rules! implement_endian_be {
         //         for all implementors, so copy-initialization is safe.
         unsafe impl NativeEndian<$raw> for $self {
             #[inline]
-            #[must_use]
             fn from_native(native: $raw) -> Self {
                 Self::from_raw(native.to_be())
             }
 
             #[inline(always)]
-            #[must_use]
             fn into_native(self) -> $raw {
                 <$raw>::from_be(self.to_raw())
             }
@@ -537,7 +525,6 @@ macro_rules! implement_endian_be_nonzero {
         //         for all implementors, so copy-initialization is safe.
         unsafe impl NativeEndian<$raw> for $self {
             #[inline]
-            #[must_use]
             fn from_native(native: $raw) -> Self {
                 Self::from_raw(
                     // SAFETY: endian conversion never folds to 0
@@ -546,7 +533,6 @@ macro_rules! implement_endian_be_nonzero {
             }
 
             #[inline(always)]
-            #[must_use]
             fn into_native(self) -> $raw {
                 // SAFETY: endian conversion never folds to 0
                 unsafe { <$raw>::new_unchecked(<$prim>::from_be(self.to_raw().get())) }
@@ -562,13 +548,11 @@ macro_rules! implement_endian_le {
         //         for all implementors, so copy-initialization is safe.
         unsafe impl NativeEndian<$raw> for $self {
             #[inline]
-            #[must_use]
             fn from_native(native: $raw) -> Self {
                 Self::from_raw(native.to_le())
             }
 
             #[inline(always)]
-            #[must_use]
             fn into_native(self) -> $raw {
                 <$raw>::from_le(self.to_raw())
             }
@@ -583,7 +567,6 @@ macro_rules! implement_endian_le_nonzero {
         //         for all implementors, so copy-initialization is safe.
         unsafe impl NativeEndian<$raw> for $self {
             #[inline]
-            #[must_use]
             fn from_native(native: $raw) -> Self {
                 Self::from_raw(
                     // SAFETY: endian conversion never folds to 0
@@ -592,7 +575,6 @@ macro_rules! implement_endian_le_nonzero {
             }
 
             #[inline(always)]
-            #[must_use]
             fn into_native(self) -> $raw {
                 // SAFETY: endian conversion never folds to 0
                 unsafe { <$raw>::new_unchecked(<$prim>::from_le(self.to_raw().get())) }

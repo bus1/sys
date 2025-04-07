@@ -144,7 +144,6 @@ macro_rules! implement_native_address {
     ( $self:ty ) => {
         impl<Target: ?Sized> NativeAddress<Target> for $self {
             #[inline]
-            #[must_use]
             unsafe fn from_usize_unchecked(v: usize) -> Self {
                 assert!(size_of::<usize>() <= size_of::<$self>());
                 // SAFETY: as-cast never folds to 0
@@ -152,7 +151,6 @@ macro_rules! implement_native_address {
             }
 
             #[inline(always)]
-            #[must_use]
             fn to_usize(&self) -> usize {
                 assert!(size_of::<$self>() <= size_of::<usize>());
                 *self as _
@@ -166,7 +164,6 @@ macro_rules! implement_native_address_nonzero {
     ( $self:ty ) => {
         impl<Target: ?Sized> NativeAddress<Target> for $self {
             #[inline]
-            #[must_use]
             unsafe fn from_usize_unchecked(v: usize) -> Self {
                 assert!(size_of::<usize>() <= size_of::<$self>());
                 unsafe {
@@ -176,7 +173,6 @@ macro_rules! implement_native_address_nonzero {
             }
 
             #[inline(always)]
-            #[must_use]
             fn to_usize(&self) -> usize {
                 assert!(size_of::<$self>() <= size_of::<usize>());
                 self.get() as _
@@ -485,7 +481,6 @@ impl<Address, Target: ?Sized> Pointer<Address, Target> {
 // Implement `Clone` via propagation.
 impl<Address: Clone, Target: ?Sized> core::clone::Clone for Pointer<Address, Target> {
     #[inline]
-    #[must_use]
     fn clone(&self) -> Self {
         Self::new(self.address().clone())
     }
@@ -545,7 +540,6 @@ where
     Address: core::cmp::Ord,
     Target: ?Sized,
 {
-    #[must_use]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.address().cmp(other.address())
     }
@@ -557,7 +551,6 @@ where
     Address: core::cmp::PartialEq,
     Target: ?Sized,
 {
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.address().eq(other.address())
     }
@@ -569,7 +562,6 @@ where
     Address: core::cmp::PartialOrd,
     Target: ?Sized,
 {
-    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.address().partial_cmp(other.address())
     }
@@ -582,7 +574,6 @@ where
     Target: ?Sized,
 {
     #[inline]
-    #[must_use]
     unsafe fn from_usize_unchecked(v: usize) -> Self {
         unsafe {
             // SAFETY: propagated to caller
@@ -591,7 +582,6 @@ where
     }
 
     #[inline(always)]
-    #[must_use]
     fn to_usize(&self) -> usize {
         self.address().to_usize()
     }
@@ -604,13 +594,11 @@ where
     Target: ?Sized,
 {
     #[inline]
-    #[must_use]
     fn from_native(native: Native) -> Self {
         Self::new(Address::from_native(native))
     }
 
     #[inline(always)]
-    #[must_use]
     fn into_native(self) -> Native {
         self.into_inner().into_native()
     }
@@ -636,7 +624,6 @@ where
     Target: Sized,
 {
     #[inline]
-    #[must_use]
     fn from(v: &Target) -> Self {
         // SAFETY: References cannot be NULL.
         unsafe { Self::from_usize_unchecked(v as *const Target as usize) }
@@ -650,7 +637,6 @@ where
     Target: Sized,
 {
     #[inline]
-    #[must_use]
     fn from(v: &mut Target) -> Self {
         // SAFETY: References cannot be NULL.
         unsafe { Self::from_usize_unchecked(v as *mut Target as usize) }

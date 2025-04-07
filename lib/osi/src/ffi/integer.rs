@@ -199,7 +199,6 @@ where
     Alignment: align::Aligned,
 {
     #[inline]
-    #[must_use]
     fn clone(&self) -> Self {
         Self::new(self.get())
     }
@@ -274,7 +273,6 @@ where
     Value: Copy + core::cmp::Ord,
     Alignment: align::Aligned,
 {
-    #[must_use]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.get().cmp(&other.get())
     }
@@ -286,7 +284,6 @@ where
     Value: Copy + core::cmp::PartialEq,
     Alignment: align::Aligned,
 {
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.get().eq(&other.get())
     }
@@ -298,7 +295,6 @@ where
     Value: Copy + core::cmp::PartialOrd,
     Alignment: align::Aligned,
 {
-    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.get().partial_cmp(&other.get())
     }
@@ -308,7 +304,6 @@ where
 impl<Value, Alignment: align::Aligned> core::convert::From<Value> for Integer<Value, Alignment>
 {
     #[inline]
-    #[must_use]
     fn from(value: Value) -> Self {
         Self::new(value)
     }
@@ -322,7 +317,6 @@ where
     Target: ?Sized,
 {
     #[inline]
-    #[must_use]
     unsafe fn from_usize_unchecked(v: usize) -> Self {
         unsafe {
             // SAFETY: delegated to caller
@@ -331,7 +325,6 @@ where
     }
 
     #[inline(always)]
-    #[must_use]
     fn to_usize(&self) -> usize {
         self.get().into_usize()
     }
@@ -348,13 +341,11 @@ where
     Alignment: align::Aligned,
 {
     #[inline]
-    #[must_use]
     fn from_native(native: Native) -> Self {
         Self::new(Value::from_native(native))
     }
 
     #[inline(always)]
-    #[must_use]
     fn into_native(self) -> Native {
         self.into_inner().into_native()
     }

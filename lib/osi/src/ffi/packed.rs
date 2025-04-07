@@ -97,7 +97,6 @@ impl<Value: Default> Packed<Value> {
 // Rely on `Copy` since we cannot get a reference to an unaligned value.
 impl<Value: Copy> Clone for Packed<Value> {
     #[inline]
-    #[must_use]
     fn clone(&self) -> Self {
         *self
     }
@@ -148,7 +147,6 @@ impl<Value> core::cmp::Ord for Packed<Value>
 where
     Value: Copy + core::cmp::Ord,
 {
-    #[must_use]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.get().cmp(&other.get())
     }
@@ -159,7 +157,6 @@ impl<Value> core::cmp::PartialEq for Packed<Value>
 where
     Value: Copy + core::cmp::PartialEq,
 {
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.get().eq(&other.get())
     }
@@ -170,7 +167,6 @@ impl<Value> core::cmp::PartialOrd for Packed<Value>
 where
     Value: Copy + core::cmp::PartialOrd,
 {
-    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.get().partial_cmp(&other.get())
     }
@@ -179,7 +175,6 @@ where
 // Implement `From` via propagation.
 impl<Value: Copy> core::convert::From<Value> for Packed<Value> {
     #[inline]
-    #[must_use]
     fn from(value: Value) -> Self {
         Self::new(value)
     }
