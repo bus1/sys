@@ -20,4 +20,5 @@ pub mod ffi;
 pub mod hash;
 pub mod hmac;
 pub mod json;
+pub mod mem;
 pub mod str;
