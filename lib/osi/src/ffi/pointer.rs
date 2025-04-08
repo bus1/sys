@@ -406,36 +406,28 @@ impl<Address, Target: ?Sized> Pointer<Address, Target> {
     /// wrapping object that protects the value from unguarded access.
     ///
     /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
     pub fn from_raw<Raw>(raw: Raw) -> Self
     where
         Self: ffi::NativeEndian<Raw>,
+        Raw: Copy,
     {
-        <Self as ffi::NativeEndian<Raw>>::from_raw(raw)
+        ffi::endian::from_raw(raw)
     }
 
     /// Returns the underlying raw, possibly foreign-ordered value behind this
     /// wrapping object.
     ///
     /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
-    pub fn into_raw<Raw>(self) -> Raw
+    pub fn to_raw<Raw>(self) -> Raw
     where
         Self: ffi::NativeEndian<Raw>,
+        Raw: Copy,
     {
-        <Self as ffi::NativeEndian<Raw>>::into_raw(self)
-    }
-
-    /// Returns the underlying raw, possibly foreign-ordered value behind this
-    /// wrapping object.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
-    #[must_use]
-    pub fn to_raw<Raw>(&self) -> Raw
-    where
-        Self: Copy + ffi::NativeEndian<Raw>,
-    {
-        <Self as ffi::NativeEndian<Raw>>::to_raw(self)
+        ffi::endian::to_raw(self)
     }
 
     /// Creates the foreign-ordered value from a native value, converting the
@@ -447,8 +439,9 @@ impl<Address, Target: ?Sized> Pointer<Address, Target> {
     pub fn from_native<Raw>(native: Raw) -> Self
     where
         Self: ffi::NativeEndian<Raw>,
+        Raw: Copy,
     {
-        <Self as ffi::NativeEndian<Raw>>::from_native(native)
+        ffi::endian::from_native(native)
     }
 
     /// Returns the native representation of the value behind this wrapping
@@ -456,25 +449,14 @@ impl<Address, Target: ?Sized> Pointer<Address, Target> {
     /// is returned, if required.
     ///
     /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
-    pub fn into_native<Raw>(self) -> Raw
+    pub fn to_native<Raw>(self) -> Raw
     where
         Self: ffi::NativeEndian<Raw>,
+        Raw: Copy,
     {
-        <Self as ffi::NativeEndian<Raw>>::into_native(self)
-    }
-
-    /// Returns the native representation of the value behind this wrapping
-    /// object. The value is converted to the native representation before it
-    /// is returned, if required.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
-    #[must_use]
-    pub fn to_native<Raw>(&self) -> Raw
-    where
-        Self: Copy + ffi::NativeEndian<Raw>,
-    {
-        <Self as ffi::NativeEndian<Raw>>::to_native(self)
+        ffi::endian::to_native(self)
     }
 }
 
@@ -588,20 +570,16 @@ where
 }
 
 // Propagate `ffi::NativeEndian` from the underlying address.
+//
+// SAFETY: With `repr(transparent)` byte-swaps and transmutations can be
+//         propagated from the inner type.
 unsafe impl<Address, Target, Native> ffi::NativeEndian<Native> for Pointer<Address, Target>
 where
     Address: ffi::NativeEndian<Native>,
     Target: ?Sized,
+    Native: Copy,
 {
-    #[inline]
-    fn from_native(native: Native) -> Self {
-        Self::new(Address::from_native(native))
-    }
-
-    #[inline(always)]
-    fn into_native(self) -> Native {
-        self.into_inner().into_native()
-    }
+    const NEEDS_SWAP: bool = Address::NEEDS_SWAP;
 }
 
 // Implement import from usize based on NativeAddress.

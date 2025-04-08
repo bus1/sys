@@ -12,97 +12,56 @@
 /// the trait is designed for `Copy` types (in particular primitive integers).
 /// Bigger or more complex types are not suitable.
 ///
+/// This trait provides default implementations for all its methods, which can
+/// also be accessed as static associated `const fn` functions. There is no
+/// need to override the default implementations, except for performance
+/// reasons.
+///
 /// ## Safety
 ///
-/// This trait requires the implementation to guarantee the size of `Self` (but
-/// not necessarily its alignment) is larger than, or equal to, that of `Raw`,
-/// and it must support initialization `Self` from the memory contents of `Raw`
-/// (possibly with following uninitialized padding), and vice versa.
+/// An implementation must guarantee that it is safe to create memory copies
+/// from `Raw` to create `Self` (and vice versa). If their size does not match,
+/// memory is truncated, or padded with uninitialized bytes.
 ///
-/// This effectively allows creating `Self` from `Raw` in a generic way, by
-/// simply copying the contents into a new instance of `Self`, and filling the
-/// remaining bytes with 0 (if any).
-pub unsafe trait NativeEndian<Raw> {
+/// Furthermore, if [`Self::NEEDS_SWAP`] is [`true`], it must be valid to
+/// reverse the order of all bytes in `Raw` to convert from, and to, the native
+/// representation.
+pub unsafe trait NativeEndian<Raw: Copy>: Copy {
+    /// This marker shows whether the native encoding matches the encoding of
+    /// the type ([`false`]), or whether a byte-swap is needed ([`true`]).
+    const NEEDS_SWAP: bool = false;
+
     /// Takes the raw, possibly foreign-ordered value `raw` and creates a
     /// wrapping object that protects the value from unguarded access.
+    #[inline]
     #[must_use]
-    fn from_raw(raw: Raw) -> Self
-    where
-        Self: Sized,
-    {
-        assert!(size_of::<Raw>() <= size_of::<Self>());
-
-        let mut v = core::mem::MaybeUninit::<Self>::uninit();
-
-        unsafe {
-            // SAFETY: The trait guarantees that `Self` can be initialized with
-            //         the value of `Raw` plus possible trailing padding.
-            if align_of::<Self>() >= align_of::<Raw>() {
-                core::ptr::write(v.as_mut_ptr() as *mut Raw, raw);
-            } else {
-                core::ptr::write_unaligned(v.as_mut_ptr() as *mut Raw, raw);
-            }
-
-            v.assume_init()
-        }
+    fn from_raw(raw: Raw) -> Self {
+        self::from_raw(raw)
     }
 
     /// Returns the underlying raw, possibly foreign-ordered value behind this
     /// wrapping object.
+    #[inline]
     #[must_use]
-    fn into_raw(self) -> Raw
-    where
-        Self: Sized,
-    {
-        assert!(size_of::<Raw>() <= size_of::<Self>());
-
-        let v = unsafe {
-            // SAFETY: The trait guarantees `Raw` can be initialized by `Self`
-            //         by simple copy and stripping possible trailing padding.
-            if align_of::<Self>() >= align_of::<Raw>() {
-                core::ptr::read(&self as *const Self as *const Raw)
-            } else {
-                core::ptr::read_unaligned(&self as *const Self as *const Raw)
-            }
-        };
-
-        // We do **not** call `core::mem::forget(self)`, since we did not move
-        // the inner value, but created `v` from a memory copy.
-        core::mem::drop(self);
-
-        v
-    }
-
-    /// Returns the underlying raw, possibly foreign-ordered value behind this
-    /// wrapping object.
-    #[must_use]
-    fn to_raw(&self) -> Raw
-    where
-        Self: Copy + Sized,
-    {
-        self.into_raw()
+    fn to_raw(self) -> Raw {
+        self::to_raw(self)
     }
 
     /// Creates the foreign-ordered value from a native value, converting the
     /// value before retaining it, if required.
+    #[inline]
     #[must_use]
-    fn from_native(native: Raw) -> Self;
+    fn from_native(native: Raw) -> Self {
+        self::from_native(native)
+    }
 
     /// Returns the native representation of the value behind this wrapping
     /// object. The value is converted to the native representation before it
     /// is returned, if required.
+    #[inline]
     #[must_use]
-    fn into_native(self) -> Raw;
-
-    /// Returns the native representation of the value behind this wrapping
-    /// object. The value is converted to the native representation before it
-    /// is returned, if required.
-    #[must_use]
-    fn to_native(&self) -> Raw
-    where
-        Self: Copy + Sized,
-    {
-        self.into_native()
+    fn to_native(self) -> Raw {
+        self::to_native(self)
     }
 }
 
@@ -128,114 +87,120 @@ pub struct BigEndian<Raw>(Raw);
 #[repr(transparent)]
 pub struct LittleEndian<Raw>(Raw);
 
-// Implement `NativeEndian` on all primitive integers via identity mappings.
-macro_rules! implement_endian_identity {
-    ( $self:ty ) => {
-        // SAFETY: Transmuting from/to itself is always safe.
-        unsafe impl NativeEndian<$self> for $self {
-            #[inline]
-            fn from_native(native: Self) -> Self {
-                native
-            }
+// Provide static implementations of the default methods in `NativeEndian`, so
+// they can be accessed in `const fn`. This can be dropped once inherent const
+// methods are allowed in traits.
 
-            #[inline(always)]
-            fn into_native(self) -> Self {
-                self
-            }
-        }
-    };
+/// Takes the raw, possibly foreign-ordered value `raw` and creates a
+/// wrapping object that protects the value from unguarded access.
+#[inline]
+#[must_use]
+pub const fn from_raw<Endian: NativeEndian<Raw>, Raw: Copy>(r: Raw) -> Endian {
+    // SAFETY: The trait guarantees that `Endian` and `Raw` can be interchanged
+    //         freely with truncated/uninitialized padding.
+    unsafe { crate::mem::transmute_copy_uninit(&r) }
 }
 
-implement_endian_identity!(i8);
-implement_endian_identity!(i16);
-implement_endian_identity!(i32);
-implement_endian_identity!(i64);
-implement_endian_identity!(i128);
-implement_endian_identity!(isize);
-implement_endian_identity!(u8);
-implement_endian_identity!(u16);
-implement_endian_identity!(u32);
-implement_endian_identity!(u64);
-implement_endian_identity!(u128);
-implement_endian_identity!(usize);
-implement_endian_identity!(core::num::NonZeroI8);
-implement_endian_identity!(core::num::NonZeroI16);
-implement_endian_identity!(core::num::NonZeroI32);
-implement_endian_identity!(core::num::NonZeroI64);
-implement_endian_identity!(core::num::NonZeroI128);
-implement_endian_identity!(core::num::NonZeroIsize);
-implement_endian_identity!(core::num::NonZeroU8);
-implement_endian_identity!(core::num::NonZeroU16);
-implement_endian_identity!(core::num::NonZeroU32);
-implement_endian_identity!(core::num::NonZeroU64);
-implement_endian_identity!(core::num::NonZeroU128);
-implement_endian_identity!(core::num::NonZeroUsize);
+/// Returns the underlying raw, possibly foreign-ordered value behind this
+/// wrapping object.
+#[inline]
+#[must_use]
+pub const fn to_raw<Endian: NativeEndian<Raw>, Raw: Copy>(e: Endian) -> Raw {
+    // SAFETY: The trait guarantees that `Endian` and `Raw` can be interchanged
+    //         freely with truncated/uninitialized padding.
+    unsafe { crate::mem::transmute_copy_uninit(&e) }
+}
+
+/// Creates the foreign-ordered value from a native value, converting the
+/// value before retaining it, if required.
+#[inline]
+#[must_use]
+pub const fn from_native<Endian: NativeEndian<Raw>, Raw: Copy>(r: Raw) -> Endian {
+    if Endian::NEEDS_SWAP {
+        // SAFETY: The trait guarantees that byte-swaps are allowed on the raw
+        //         representation.
+        unsafe { from_raw(crate::mem::bswap_copy(&r)) }
+    } else {
+        from_raw(r)
+    }
+}
+
+/// Returns the native representation of the value behind this wrapping
+/// object. The value is converted to the native representation before it
+/// is returned, if required.
+#[inline]
+#[must_use]
+pub const fn to_native<Endian: NativeEndian<Raw>, Raw: Copy>(e: Endian) -> Raw {
+    if Endian::NEEDS_SWAP {
+        // SAFETY: The trait guarantees that byte-swaps are allowed on the raw
+        //         representation.
+        unsafe { crate::mem::bswap_copy(&to_raw(e)) }
+    } else {
+        to_raw(e)
+    }
+}
+
+unsafe impl NativeEndian<i8> for i8 { }
+unsafe impl NativeEndian<i16> for i16 { }
+unsafe impl NativeEndian<i32> for i32 { }
+unsafe impl NativeEndian<i64> for i64 { }
+unsafe impl NativeEndian<i128> for i128 { }
+unsafe impl NativeEndian<isize> for isize { }
+unsafe impl NativeEndian<u8> for u8 { }
+unsafe impl NativeEndian<u16> for u16 { }
+unsafe impl NativeEndian<u32> for u32 { }
+unsafe impl NativeEndian<u64> for u64 { }
+unsafe impl NativeEndian<u128> for u128 { }
+unsafe impl NativeEndian<usize> for usize { }
+unsafe impl NativeEndian<core::num::NonZeroI8> for core::num::NonZeroI8 { }
+unsafe impl NativeEndian<core::num::NonZeroI16> for core::num::NonZeroI16 { }
+unsafe impl NativeEndian<core::num::NonZeroI32> for core::num::NonZeroI32 { }
+unsafe impl NativeEndian<core::num::NonZeroI64> for core::num::NonZeroI64 { }
+unsafe impl NativeEndian<core::num::NonZeroI128> for core::num::NonZeroI128 { }
+unsafe impl NativeEndian<core::num::NonZeroIsize> for core::num::NonZeroIsize { }
+unsafe impl NativeEndian<core::num::NonZeroU8> for core::num::NonZeroU8 { }
+unsafe impl NativeEndian<core::num::NonZeroU16> for core::num::NonZeroU16 { }
+unsafe impl NativeEndian<core::num::NonZeroU32> for core::num::NonZeroU32 { }
+unsafe impl NativeEndian<core::num::NonZeroU64> for core::num::NonZeroU64 { }
+unsafe impl NativeEndian<core::num::NonZeroU128> for core::num::NonZeroU128 { }
+unsafe impl NativeEndian<core::num::NonZeroUsize> for core::num::NonZeroUsize { }
 
 impl<Raw> BigEndian<Raw>
 where
     Self: NativeEndian<Raw>,
+    Raw: Copy,
 {
     /// Takes the raw, possibly foreign-ordered value `raw` and creates a
     /// wrapping object that protects the value from unguarded access.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
-    pub fn from_raw(raw: Raw) -> Self {
-        <Self as NativeEndian<Raw>>::from_raw(raw)
+    pub const fn from_raw(raw: Raw) -> Self {
+        self::from_raw(raw)
     }
 
     /// Returns the underlying raw, possibly foreign-ordered value behind this
     /// wrapping object.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
-    pub fn into_raw(self) -> Raw {
-        <Self as NativeEndian<Raw>>::into_raw(self)
-    }
-
-    /// Returns the underlying raw, possibly foreign-ordered value behind this
-    /// wrapping object.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
-    #[must_use]
-    pub fn to_raw(&self) -> Raw
-    where
-        Self: Copy,
-    {
-        <Self as NativeEndian<Raw>>::to_raw(self)
+    pub fn to_raw(self) -> Raw {
+        self::to_raw(self)
     }
 
     /// Creates the foreign-ordered value from a native value, converting the
     /// value before retaining it, if required.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
     #[inline]
     #[must_use]
     pub fn from_native(native: Raw) -> Self {
-        <Self as NativeEndian<Raw>>::from_native(native)
+        self::from_native(native)
     }
 
     /// Returns the native representation of the value behind this wrapping
     /// object. The value is converted to the native representation before it
     /// is returned, if required.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
-    pub fn into_native(self) -> Raw {
-        <Self as NativeEndian<Raw>>::into_native(self)
-    }
-
-    /// Returns the native representation of the value behind this wrapping
-    /// object. The value is converted to the native representation before it
-    /// is returned, if required.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
-    #[must_use]
-    pub fn to_native(&self) -> Raw
-    where
-        Self: Copy,
-    {
-        <Self as NativeEndian<Raw>>::to_native(self)
+    pub fn to_native(self) -> Raw {
+        self::to_native(self)
     }
 }
 
@@ -338,68 +303,39 @@ where
 impl<Raw> LittleEndian<Raw>
 where
     Self: NativeEndian<Raw>,
+    Raw: Copy,
 {
     /// Takes the raw, possibly foreign-ordered value `raw` and creates a
     /// wrapping object that protects the value from unguarded access.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
     pub fn from_raw(raw: Raw) -> Self {
-        <Self as NativeEndian<Raw>>::from_raw(raw)
+        self::from_raw(raw)
     }
 
     /// Returns the underlying raw, possibly foreign-ordered value behind this
     /// wrapping object.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
-    pub fn into_raw(self) -> Raw {
-        <Self as NativeEndian<Raw>>::into_raw(self)
-    }
-
-    /// Returns the underlying raw, possibly foreign-ordered value behind this
-    /// wrapping object.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
-    #[must_use]
-    pub fn to_raw(&self) -> Raw
-    where
-        Self: Copy,
-    {
-        <Self as NativeEndian<Raw>>::to_raw(self)
+    pub fn to_raw(self) -> Raw {
+        self::to_raw(self)
     }
 
     /// Creates the foreign-ordered value from a native value, converting the
     /// value before retaining it, if required.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
     #[inline]
     #[must_use]
     pub fn from_native(native: Raw) -> Self {
-        <Self as NativeEndian<Raw>>::from_native(native)
+        self::from_native(native)
     }
 
     /// Returns the native representation of the value behind this wrapping
     /// object. The value is converted to the native representation before it
     /// is returned, if required.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
+    #[inline]
     #[must_use]
-    pub fn into_native(self) -> Raw {
-        <Self as NativeEndian<Raw>>::into_native(self)
-    }
-
-    /// Returns the native representation of the value behind this wrapping
-    /// object. The value is converted to the native representation before it
-    /// is returned, if required.
-    ///
-    /// This is a convenience accessor via the `NativeEndian` trait.
-    #[must_use]
-    pub fn to_native(&self) -> Raw
-    where
-        Self: Copy,
-    {
-        <Self as NativeEndian<Raw>>::to_native(self)
+    pub fn to_native(self) -> Raw {
+        self::to_native(self)
     }
 }
 
@@ -499,139 +435,115 @@ where
     }
 }
 
-// Implement `NativeEndian` on big-endian integers via `from/to_be()`.
-macro_rules! implement_endian_be {
-    ( $self:ty, $raw:ty ) => {
-        // SAFETY: `BigEndian<T>` is `repr(transparent)` and `T` is `Copy`
-        //         for all implementors, so copy-initialization is safe.
-        unsafe impl NativeEndian<$raw> for $self {
-            #[inline]
-            fn from_native(native: $raw) -> Self {
-                Self::from_raw(native.to_be())
-            }
+#[cfg(target_endian = "big")]
+mod impl_big {
+    use super::*;
 
-            #[inline(always)]
-            fn into_native(self) -> $raw {
-                <$raw>::from_be(self.to_raw())
-            }
-        }
-    };
+    unsafe impl NativeEndian<i8> for BigEndian<i8> { }
+    unsafe impl NativeEndian<i16> for BigEndian<i16> { }
+    unsafe impl NativeEndian<i32> for BigEndian<i32> { }
+    unsafe impl NativeEndian<i64> for BigEndian<i64> { }
+    unsafe impl NativeEndian<i128> for BigEndian<i128> { }
+    unsafe impl NativeEndian<isize> for BigEndian<isize> { }
+    unsafe impl NativeEndian<u8> for BigEndian<u8> { }
+    unsafe impl NativeEndian<u16> for BigEndian<u16> { }
+    unsafe impl NativeEndian<u32> for BigEndian<u32> { }
+    unsafe impl NativeEndian<u64> for BigEndian<u64> { }
+    unsafe impl NativeEndian<u128> for BigEndian<u128> { }
+    unsafe impl NativeEndian<usize> for BigEndian<usize> { }
+    unsafe impl NativeEndian<core::num::NonZeroI8> for BigEndian<core::num::NonZeroI8> { }
+    unsafe impl NativeEndian<core::num::NonZeroI16> for BigEndian<core::num::NonZeroI16> { }
+    unsafe impl NativeEndian<core::num::NonZeroI32> for BigEndian<core::num::NonZeroI32> { }
+    unsafe impl NativeEndian<core::num::NonZeroI64> for BigEndian<core::num::NonZeroI64> { }
+    unsafe impl NativeEndian<core::num::NonZeroI128> for BigEndian<core::num::NonZeroI128> { }
+    unsafe impl NativeEndian<core::num::NonZeroIsize> for BigEndian<core::num::NonZeroIsize> { }
+    unsafe impl NativeEndian<core::num::NonZeroU8> for BigEndian<core::num::NonZeroU8> { }
+    unsafe impl NativeEndian<core::num::NonZeroU16> for BigEndian<core::num::NonZeroU16> { }
+    unsafe impl NativeEndian<core::num::NonZeroU32> for BigEndian<core::num::NonZeroU32> { }
+    unsafe impl NativeEndian<core::num::NonZeroU64> for BigEndian<core::num::NonZeroU64> { }
+    unsafe impl NativeEndian<core::num::NonZeroU128> for BigEndian<core::num::NonZeroU128> { }
+    unsafe impl NativeEndian<core::num::NonZeroUsize> for BigEndian<core::num::NonZeroUsize> { }
+
+    unsafe impl NativeEndian<i8> for LittleEndian<i8> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<i16> for LittleEndian<i16> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<i32> for LittleEndian<i32> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<i64> for LittleEndian<i64> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<i128> for LittleEndian<i128> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<isize> for LittleEndian<isize> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u8> for LittleEndian<u8> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u16> for LittleEndian<u16> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u32> for LittleEndian<u32> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u64> for LittleEndian<u64> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u128> for LittleEndian<u128> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<usize> for LittleEndian<usize> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI8> for LittleEndian<core::num::NonZeroI8> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI16> for LittleEndian<core::num::NonZeroI16> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI32> for LittleEndian<core::num::NonZeroI32> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI64> for LittleEndian<core::num::NonZeroI64> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI128> for LittleEndian<core::num::NonZeroI128> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroIsize> for LittleEndian<core::num::NonZeroIsize> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU8> for LittleEndian<core::num::NonZeroU8> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU16> for LittleEndian<core::num::NonZeroU16> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU32> for LittleEndian<core::num::NonZeroU32> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU64> for LittleEndian<core::num::NonZeroU64> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU128> for LittleEndian<core::num::NonZeroU128> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroUsize> for LittleEndian<core::num::NonZeroUsize> { const NEEDS_SWAP: bool = true; }
 }
 
-// Implement `NativeEndian` on big-endian non-zeros via `from/to_be()`.
-macro_rules! implement_endian_be_nonzero {
-    ( $self:ty, $raw:ty, $prim:ty ) => {
-        // SAFETY: `BigEndian<T>` is `repr(transparent)` and `T` is `Copy`
-        //         for all implementors, so copy-initialization is safe.
-        unsafe impl NativeEndian<$raw> for $self {
-            #[inline]
-            fn from_native(native: $raw) -> Self {
-                Self::from_raw(
-                    // SAFETY: endian conversion never folds to 0
-                    unsafe { <$raw>::new_unchecked(native.get().to_be()) },
-                )
-            }
+#[cfg(target_endian = "little")]
+mod impl_big {
+    use super::*;
 
-            #[inline(always)]
-            fn into_native(self) -> $raw {
-                // SAFETY: endian conversion never folds to 0
-                unsafe { <$raw>::new_unchecked(<$prim>::from_be(self.to_raw().get())) }
-            }
-        }
-    };
+    unsafe impl NativeEndian<i8> for BigEndian<i8> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<i16> for BigEndian<i16> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<i32> for BigEndian<i32> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<i64> for BigEndian<i64> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<i128> for BigEndian<i128> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<isize> for BigEndian<isize> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u8> for BigEndian<u8> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u16> for BigEndian<u16> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u32> for BigEndian<u32> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u64> for BigEndian<u64> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<u128> for BigEndian<u128> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<usize> for BigEndian<usize> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI8> for BigEndian<core::num::NonZeroI8> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI16> for BigEndian<core::num::NonZeroI16> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI32> for BigEndian<core::num::NonZeroI32> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI64> for BigEndian<core::num::NonZeroI64> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroI128> for BigEndian<core::num::NonZeroI128> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroIsize> for BigEndian<core::num::NonZeroIsize> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU8> for BigEndian<core::num::NonZeroU8> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU16> for BigEndian<core::num::NonZeroU16> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU32> for BigEndian<core::num::NonZeroU32> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU64> for BigEndian<core::num::NonZeroU64> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroU128> for BigEndian<core::num::NonZeroU128> { const NEEDS_SWAP: bool = true; }
+    unsafe impl NativeEndian<core::num::NonZeroUsize> for BigEndian<core::num::NonZeroUsize> { const NEEDS_SWAP: bool = true; }
+
+    unsafe impl NativeEndian<i8> for LittleEndian<i8> { }
+    unsafe impl NativeEndian<i16> for LittleEndian<i16> { }
+    unsafe impl NativeEndian<i32> for LittleEndian<i32> { }
+    unsafe impl NativeEndian<i64> for LittleEndian<i64> { }
+    unsafe impl NativeEndian<i128> for LittleEndian<i128> { }
+    unsafe impl NativeEndian<isize> for LittleEndian<isize> { }
+    unsafe impl NativeEndian<u8> for LittleEndian<u8> { }
+    unsafe impl NativeEndian<u16> for LittleEndian<u16> { }
+    unsafe impl NativeEndian<u32> for LittleEndian<u32> { }
+    unsafe impl NativeEndian<u64> for LittleEndian<u64> { }
+    unsafe impl NativeEndian<u128> for LittleEndian<u128> { }
+    unsafe impl NativeEndian<usize> for LittleEndian<usize> { }
+    unsafe impl NativeEndian<core::num::NonZeroI8> for LittleEndian<core::num::NonZeroI8> { }
+    unsafe impl NativeEndian<core::num::NonZeroI16> for LittleEndian<core::num::NonZeroI16> { }
+    unsafe impl NativeEndian<core::num::NonZeroI32> for LittleEndian<core::num::NonZeroI32> { }
+    unsafe impl NativeEndian<core::num::NonZeroI64> for LittleEndian<core::num::NonZeroI64> { }
+    unsafe impl NativeEndian<core::num::NonZeroI128> for LittleEndian<core::num::NonZeroI128> { }
+    unsafe impl NativeEndian<core::num::NonZeroIsize> for LittleEndian<core::num::NonZeroIsize> { }
+    unsafe impl NativeEndian<core::num::NonZeroU8> for LittleEndian<core::num::NonZeroU8> { }
+    unsafe impl NativeEndian<core::num::NonZeroU16> for LittleEndian<core::num::NonZeroU16> { }
+    unsafe impl NativeEndian<core::num::NonZeroU32> for LittleEndian<core::num::NonZeroU32> { }
+    unsafe impl NativeEndian<core::num::NonZeroU64> for LittleEndian<core::num::NonZeroU64> { }
+    unsafe impl NativeEndian<core::num::NonZeroU128> for LittleEndian<core::num::NonZeroU128> { }
+    unsafe impl NativeEndian<core::num::NonZeroUsize> for LittleEndian<core::num::NonZeroUsize> { }
 }
-
-// Implement `NativeEndian` on little-endian integers via `from/to_le()`.
-macro_rules! implement_endian_le {
-    ( $self:ty, $raw:ty ) => {
-        // SAFETY: `LittleEndian<T>` is `repr(transparent)` and `T` is `Copy`
-        //         for all implementors, so copy-initialization is safe.
-        unsafe impl NativeEndian<$raw> for $self {
-            #[inline]
-            fn from_native(native: $raw) -> Self {
-                Self::from_raw(native.to_le())
-            }
-
-            #[inline(always)]
-            fn into_native(self) -> $raw {
-                <$raw>::from_le(self.to_raw())
-            }
-        }
-    };
-}
-
-// Implement `NativeEndian` on little-endian non-zeros via `from/to_le()`.
-macro_rules! implement_endian_le_nonzero {
-    ( $self:ty, $raw:ty, $prim:ty ) => {
-        // SAFETY: `LittleEndian<T>` is `repr(transparent)` and `T` is `Copy`
-        //         for all implementors, so copy-initialization is safe.
-        unsafe impl NativeEndian<$raw> for $self {
-            #[inline]
-            fn from_native(native: $raw) -> Self {
-                Self::from_raw(
-                    // SAFETY: endian conversion never folds to 0
-                    unsafe { <$raw>::new_unchecked(native.get().to_le()) },
-                )
-            }
-
-            #[inline(always)]
-            fn into_native(self) -> $raw {
-                // SAFETY: endian conversion never folds to 0
-                unsafe { <$raw>::new_unchecked(<$prim>::from_le(self.to_raw().get())) }
-            }
-        }
-    };
-}
-
-implement_endian_be!(BigEndian<i8>, i8);
-implement_endian_be!(BigEndian<i16>, i16);
-implement_endian_be!(BigEndian<i32>, i32);
-implement_endian_be!(BigEndian<i64>, i64);
-implement_endian_be!(BigEndian<i128>, i128);
-implement_endian_be!(BigEndian<isize>, isize);
-implement_endian_be!(BigEndian<u8>, u8);
-implement_endian_be!(BigEndian<u16>, u16);
-implement_endian_be!(BigEndian<u32>, u32);
-implement_endian_be!(BigEndian<u64>, u64);
-implement_endian_be!(BigEndian<u128>, u128);
-implement_endian_be!(BigEndian<usize>, usize);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroI8>, core::num::NonZeroI8, i8);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroI16>, core::num::NonZeroI16, i16);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroI32>, core::num::NonZeroI32, i32);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroI64>, core::num::NonZeroI64, i64);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroI128>, core::num::NonZeroI128, i128);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroIsize>, core::num::NonZeroIsize, isize);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroU8>, core::num::NonZeroU8, u8);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroU16>, core::num::NonZeroU16, u16);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroU32>, core::num::NonZeroU32, u32);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroU64>, core::num::NonZeroU64, u64);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroU128>, core::num::NonZeroU128, u128);
-implement_endian_be_nonzero!(BigEndian<core::num::NonZeroUsize>, core::num::NonZeroUsize, usize);
-
-implement_endian_le!(LittleEndian<i8>, i8);
-implement_endian_le!(LittleEndian<i16>, i16);
-implement_endian_le!(LittleEndian<i32>, i32);
-implement_endian_le!(LittleEndian<i64>, i64);
-implement_endian_le!(LittleEndian<i128>, i128);
-implement_endian_le!(LittleEndian<isize>, isize);
-implement_endian_le!(LittleEndian<u8>, u8);
-implement_endian_le!(LittleEndian<u16>, u16);
-implement_endian_le!(LittleEndian<u32>, u32);
-implement_endian_le!(LittleEndian<u64>, u64);
-implement_endian_le!(LittleEndian<u128>, u128);
-implement_endian_le!(LittleEndian<usize>, usize);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroI8>, core::num::NonZeroI8, i8);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroI16>, core::num::NonZeroI16, i16);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroI32>, core::num::NonZeroI32, i32);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroI64>, core::num::NonZeroI64, i64);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroI128>, core::num::NonZeroI128, i128);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroIsize>, core::num::NonZeroIsize, isize);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroU8>, core::num::NonZeroU8, u8);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroU16>, core::num::NonZeroU16, u16);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroU32>, core::num::NonZeroU32, u32);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroU64>, core::num::NonZeroU64, u64);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroU128>, core::num::NonZeroU128, u128);
-implement_endian_le_nonzero!(LittleEndian<core::num::NonZeroUsize>, core::num::NonZeroUsize, usize);
 
 #[cfg(test)]
 mod tests {
@@ -661,8 +573,8 @@ mod tests {
             let b: BigEndian<u32> = BigEndian::from_raw(r);
             let l: LittleEndian<u32> = LittleEndian::from_raw(r);
 
-            assert_eq!(b.into_raw(), r);
-            assert_eq!(l.into_raw(), r);
+            assert_eq!(b.to_raw(), r);
+            assert_eq!(l.to_raw(), r);
             assert_eq!(b.to_raw(), r);
             assert_eq!(l.to_raw(), r);
 
@@ -673,8 +585,8 @@ mod tests {
             let b: BigEndian<u32> = BigEndian::from_native(r);
             let l: LittleEndian<u32> = LittleEndian::from_native(r);
 
-            assert_eq!(b.into_native(), r);
-            assert_eq!(l.into_native(), r);
+            assert_eq!(b.to_native(), r);
+            assert_eq!(l.to_native(), r);
             assert_eq!(b.to_native(), r);
             assert_eq!(l.to_native(), r);
 
@@ -686,7 +598,7 @@ mod tests {
     #[test]
     fn unaligned() {
         // Use an underaligned implementation of `NativeEndian` and verify
-        // the generic implementations of `from_raw()` and `into_raw()` work
+        // the generic implementations of `from_raw()` and `to_raw()` work
         // as expected.
         {
             type Big32 = ffi::Integer<BigEndian<u32>, align::AlignAs<1>>;
@@ -698,14 +610,14 @@ mod tests {
             let ln: Little32 = Little32::new(LittleEndian::from_native(r));
             let lr: Little32 = Little32::new(LittleEndian::from_raw(r));
 
-            assert_eq!(bn.into_native(), r);
-            assert_eq!(br.into_raw(), r);
-            assert_eq!(ln.into_native(), r);
-            assert_eq!(lr.into_raw(), r);
+            assert_eq!(bn.to_native(), r);
+            assert_eq!(br.to_raw(), r);
+            assert_eq!(ln.to_native(), r);
+            assert_eq!(lr.to_raw(), r);
         }
 
         // Use an overaligned implementation of `NativeEndian` and verify
-        // the generic implementations of `from_raw()` and `into_raw()` work
+        // the generic implementations of `from_raw()` and `to_raw()` work
         // as expected.
         {
             type Big32 = ffi::Integer<BigEndian<u32>, align::AlignAs<8>>;
@@ -717,10 +629,10 @@ mod tests {
             let ln: Little32 = Little32::new(LittleEndian::from_native(r));
             let lr: Little32 = Little32::new(LittleEndian::from_raw(r));
 
-            assert_eq!(bn.into_native(), r);
-            assert_eq!(br.into_raw(), r);
-            assert_eq!(ln.into_native(), r);
-            assert_eq!(lr.into_raw(), r);
+            assert_eq!(bn.to_native(), r);
+            assert_eq!(br.to_raw(), r);
+            assert_eq!(ln.to_native(), r);
+            assert_eq!(lr.to_raw(), r);
         }
     }
 
@@ -732,8 +644,8 @@ mod tests {
         let l: LittleEndian<u32> = LittleEndian::from_native(r);
 
         // `Clone`
-        assert_eq!(b.clone().into_native(), r);
-        assert_eq!(l.clone().into_native(), r);
+        assert_eq!(b.clone().to_native(), r);
+        assert_eq!(l.clone().to_native(), r);
 
         // `Copy`
         let bc: BigEndian<u32> = b;
