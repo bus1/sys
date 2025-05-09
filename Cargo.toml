@@ -18,6 +18,10 @@ readme = "README.md"
 repository = "https://github.com/bus1/sys"
 rust-version = "1.85"
 
+[workspace.dependencies]
+osi = { path = "./lib/osi" }
+sys = { path = "./lib/sys" }
+
 [workspace.lints.clippy]
 identity_op = "allow"
 redundant_field_names = "allow"
