@@ -27,7 +27,7 @@ const unsafe fn copy_unaligned<T>(src: *const T, dst: *mut T, count: usize) {
 /// interpets the result as a value of type `Dst`. The data is truncated or
 /// padded with uninitialized bytes, if necessary.
 ///
-/// This is similar to [`core::mem:transmute_copy`] but allows the types to
+/// This is similar to [`core::mem::transmute_copy`] but allows the types to
 /// differ in size.
 ///
 /// ## Safety
