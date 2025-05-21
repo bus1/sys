@@ -19,8 +19,9 @@ repository = "https://github.com/bus1/sys"
 rust-version = "1.85"
 
 [workspace.dependencies]
-osi = { path = "./lib/osi" }
-sys = { path = "./lib/sys" }
+libc = { default-features = false, version = "0.2.172" }
+osi = { path = "./lib/osi", version = "0.0.1" }
+sys = { path = "./lib/sys", version = "0.0.1" }
 
 [workspace.lints.clippy]
 identity_op = "allow"

@@ -24,4 +24,5 @@ workspace = true
 std = []
 
 [dependencies]
+libc = { optional = true, workspace = true }
 osi = { workspace = true }
