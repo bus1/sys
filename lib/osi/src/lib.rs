@@ -14,6 +14,7 @@ extern crate std;
 
 pub mod align;
 pub mod args;
+pub mod cfg;
 pub mod compat;
 pub mod error;
 pub mod ffi;
