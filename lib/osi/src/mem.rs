@@ -119,6 +119,49 @@ pub const unsafe fn bswap_copy<T>(v: &T) -> T {
     }
 }
 
+/// Alias a type as a byte slice.
+///
+/// This function allows accessing any type as a slice of bytes. This is safe
+/// for all types. However, the content of padding bytes is neither well
+/// defined nor stable.
+pub const fn as_bytes<'a, T>(v: &'a T) -> &'a [u8] {
+    // SAFETY: We retain the allocation size of `T` and its lifetime. Hence,
+    //         the transmute is safe for as long as `'a`. Since `v` is
+    //         borrowed, we prevent mutable access for the entire lifetime of
+    //         the returned value.
+    unsafe {
+        core::slice::from_raw_parts::<'a, u8>(
+            v as *const _ as *const _,
+            core::mem::size_of::<T>(),
+        )
+    }
+}
+
+/// Alias a type as a mutable byte slice.
+///
+/// This function allows accessing any type as a mutable slice of bytes. This
+/// is inherently unsafe, as it allows modifying the backing memory of any type
+/// and, thus, might violate type invariants.
+///
+/// ## Safety
+///
+/// Like [`as_bytes()`], this can be safely called on any type. However, unlike
+/// [`as_bytes()`], this function grants mutable access and thus any mutable
+/// use of the returned reference must guarantee not to violate any invariants
+/// of `T`.
+pub const unsafe fn as_bytes_mut<'a, T>(v: &'a mut T) -> &'a mut [u8] {
+    // SAFETY: We retain the allocation size of `T` and its lifetime. Hence,
+    //         the transmute is safe for as long as `'a`. Since `v` is
+    //         borrowed, we claim mutable access for the entire lifetime of
+    //         the returned value.
+    unsafe {
+        core::slice::from_raw_parts_mut::<'a, u8>(
+            v as *mut _ as *mut _,
+            core::mem::size_of::<T>(),
+        )
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -176,5 +219,24 @@ mod test {
             assert_eq!(bswap_copy(&0x00112233445566778899101112131415u128), 0x15141312111099887766554433221100u128);
             assert_eq!(bswap_copy(&[0x00u8, 0x11u8, 0x22u8]), [0x22u8, 0x11u8, 0x00u8]);
         }
+    }
+
+    // Verify byte aliasing
+    #[test]
+    fn byte_alias() {
+        let mut v: u16 = 0xf0f0;
+
+        assert_eq!(as_bytes(&v)[0], 0xf0);
+        assert_eq!(as_bytes(&v)[1], 0xf0);
+
+        unsafe {
+            as_bytes_mut(&mut v)[0] = 0x0f;
+            as_bytes_mut(&mut v)[1] = 0x0f;
+        }
+
+        assert_eq!(as_bytes(&v)[0], 0x0f);
+        assert_eq!(as_bytes(&v)[1], 0x0f);
+
+        assert_eq!(v, 0x0f0f);
     }
 }
