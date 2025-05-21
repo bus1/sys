@@ -2,8 +2,8 @@
 
 This is the home of the `osi` and `sys` Rust packages. They provide access to
 a wide collection of system-independent, as well as system-specific, interfaces
-following a capability-based design. The `osi` package provides portable
-interfaces (operating system independent), while the `sys` package provides
+following a capability-based design. The `osi` package provides
+operating-system independent interfaces, while the `sys` package provides
 system specific interfaces.
 
 ### Project
