@@ -162,6 +162,15 @@ pub const unsafe fn as_bytes_mut<'a, T>(v: &'a mut T) -> &'a mut [u8] {
     }
 }
 
+/// Compare backing memory for equality.
+///
+/// Compare the backing memory of two values for equality. Return `true` if the
+/// memory compares equal, false if not. Note that all memory must compare
+/// equal, including padding bytes (which have no guaranteed nor stable value).
+pub fn eq<A, B>(a: &A, b: &B) -> bool {
+    *as_bytes(a) == *as_bytes(b)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -238,5 +247,18 @@ mod test {
         assert_eq!(as_bytes(&v)[1], 0x0f);
 
         assert_eq!(v, 0x0f0f);
+    }
+
+    // Verify byte-wise equality
+    #[test]
+    fn byte_eq() {
+        let v: u16 = 0xf0f0;
+
+        assert!(eq(&v, &0xf0f0u16));
+        assert!(eq(&v, &[0xf0u8, 0xf0u8]));
+
+        assert!(!eq(&v, &0x00f0u16));
+        assert!(!eq(&v, &0xf0f0u32));
+        assert!(!eq(&v, &[0xf0u16, 0xf0u16]));
     }
 }
