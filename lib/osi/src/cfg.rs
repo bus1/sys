@@ -72,6 +72,7 @@ macro_rules! crate_cfg_cond {
 /// Note that this macro cannot produce expressions, and is not valid in
 /// expression context. Use [`core::cfg!()`] from the standard library for that
 /// purpose.
+#[doc(inline)]
 pub use crate_cfg_cond as cond;
 
 #[cfg(test)]
