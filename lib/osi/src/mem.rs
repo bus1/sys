@@ -16,7 +16,7 @@ const unsafe fn copy_unaligned<T>(src: *const T, dst: *mut T, count: usize) {
         core::ptr::copy(
             src as *const u8,
             dst as *mut u8,
-            count * size_of::<T>(),
+            count * core::mem::size_of::<T>(),
         )
     }
 }
@@ -38,7 +38,7 @@ const unsafe fn copy_unaligned<T>(src: *const T, dst: *mut T, count: usize) {
 #[inline]
 #[must_use]
 pub const unsafe fn transmute_copy_uninit<Src, Dst>(src: &Src) -> Dst {
-    if size_of::<Src>() < size_of::<Dst>() {
+    if core::mem::size_of::<Src>() < core::mem::size_of::<Dst>() {
         // The source is smaller in size than the destination. Hence, we need
         // an uninitialized buffer that we copy into, and then yield to the
         // caller. Trailing padding is left uninitialized.
@@ -61,7 +61,7 @@ pub const unsafe fn transmute_copy_uninit<Src, Dst>(src: &Src) -> Dst {
         //
         // SAFETY: Delegated to the caller.
         unsafe {
-            if align_of::<Dst>() > align_of::<Src>() {
+            if core::mem::align_of::<Dst>() > core::mem::align_of::<Src>() {
                 core::ptr::read_unaligned(src as *const Src as *const Dst)
             } else {
                 core::ptr::read(src as *const Src as *const Dst)
@@ -80,9 +80,9 @@ const unsafe fn bswap_slow<T>(v: &T) -> T {
 
     unsafe {
         let mut i = 0;
-        while i < size_of::<T>() {
+        while i < core::mem::size_of::<T>() {
             core::ptr::copy(
-                src.add(size_of::<T>() - i - 1),
+                src.add(core::mem::size_of::<T>() - i - 1),
                 dst.add(i),
                 1,
             );
@@ -108,7 +108,7 @@ pub const unsafe fn bswap_copy<T>(v: &T) -> T {
     // SAFETY: The caller guarantees that `T` is valid with all bytes swapped.
     //         And due to `T: Copy`, we can safely create memory copies.
     unsafe {
-        match size_of::<T>() {
+        match core::mem::size_of::<T>() {
             1 => transmute_copy(v),
             2 => transmute_copy(&u16::swap_bytes(transmute_copy(v))),
             4 => transmute_copy(&u32::swap_bytes(transmute_copy(v))),
@@ -199,10 +199,10 @@ mod test {
             v: u16,
         }
 
-        assert_eq!(size_of::<Overaligned>(), 4);
-        assert_eq!(align_of::<Overaligned>(), 4);
-        assert_eq!(size_of::<Underaligned>(), 2);
-        assert_eq!(align_of::<Underaligned>(), 1);
+        assert_eq!(core::mem::size_of::<Overaligned>(), 4);
+        assert_eq!(core::mem::align_of::<Overaligned>(), 4);
+        assert_eq!(core::mem::size_of::<Underaligned>(), 2);
+        assert_eq!(core::mem::align_of::<Underaligned>(), 1);
 
         let s: u16 = 71;
         let o: Overaligned = unsafe { transmute_copy_uninit(&s) };

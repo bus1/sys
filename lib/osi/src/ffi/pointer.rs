@@ -3,6 +3,7 @@
 //! This module provides [`NativeAddress`], [`Pointer`], as well as related
 //! utilities.
 
+use core::mem::size_of;
 use crate::ffi;
 
 /// A trait to annotate types that effectively wrap a native memory address. It

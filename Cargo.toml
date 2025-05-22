@@ -1,6 +1,6 @@
 [workspace]
 members = ["lib/*"]
-resolver = "3"
+resolver = "2"
 
 default-members = [
         "lib/*",
@@ -11,7 +11,7 @@ categories = [
         "no-std",
         "os",
 ]
-edition = "2024"
+edition = "2021"
 homepage = "https://www.bus1.eu"
 license = "MIT OR Apache-2.0 OR LGPL-2.1-or-later"
 readme = "README.md"
