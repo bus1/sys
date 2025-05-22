@@ -4,10 +4,11 @@ version = "0.0.1"
 
 description = "Capability-based Standard Interfaces"
 keywords = [
-        "capability based",
-        "cross platform",
-        "operating system independent",
-        "standard interfaces",
+        "capability-based",
+        "cross-platform",
+        "interfaces",
+        "library",
+        "standard",
 ]
 
 categories.workspace = true

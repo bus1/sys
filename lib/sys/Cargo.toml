@@ -4,9 +4,11 @@ version = "0.0.1"
 
 description = "Capability-based System Interfaces"
 keywords = [
-        "capability based",
-        "cross platform",
-        "system interfaces",
+        "capability-based",
+        "interfaces",
+        "library",
+        "syscall",
+        "system",
 ]
 
 categories.workspace = true
