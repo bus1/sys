@@ -22,6 +22,7 @@ rust-version = "1.83"
 libc = { default-features = false, version = "0.2.172" }
 osi = { path = "./lib/osi", version = "0.0.1" }
 sys = { path = "./lib/sys", version = "0.0.1" }
+tmp = { path = "./lib/tmp", version = "0.0.1" }
 
 [workspace.lints.clippy]
 identity_op = "allow"

@@ -1,0 +1,26 @@
+[package]
+name = "tmp"
+version = "0.0.1"
+
+description = "Capability-based Preview Interfaces"
+keywords = [
+        "capability-based",
+        "interfaces",
+        "library",
+        "syscall",
+        "system",
+]
+
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+osi = { workspace = true }
