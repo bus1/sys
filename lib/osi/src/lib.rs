@@ -23,4 +23,5 @@ pub mod hash;
 pub mod hmac;
 pub mod json;
 pub mod mem;
+pub mod meta;
 pub mod str;
