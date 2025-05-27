@@ -24,3 +24,4 @@ workspace = true
 
 [dependencies]
 osi = { workspace = true }
+sys = { workspace = true }
