@@ -171,12 +171,12 @@ where
     }
 
     /// Provide a view to the member field of the container.
-    fn view<'a>(&'a self) -> FieldView<'a, Self, OFFSET> {
+    fn view(&self) -> FieldView<'_, Self, OFFSET> {
         FieldView::with_container(self)
     }
 
     /// Provide a mutable view to the member field of the container.
-    fn view_mut<'a>(&'a mut self) -> FieldViewMut<'a, Self, OFFSET> {
+    fn view_mut(&mut self) -> FieldViewMut<'_, Self, OFFSET> {
         FieldViewMut::with_container(self)
     }
 }
