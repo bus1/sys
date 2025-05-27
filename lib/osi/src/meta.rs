@@ -42,6 +42,9 @@ where
 /// member at relative offset `OFFSET`. The type of the field member is given
 /// as `Field<OFFSET>::Value`.
 ///
+/// Note that if multiple member fields are zero-sized and have the same
+/// offset, this trait can only be implemented for one of them.
+///
 /// ## Safety
 ///
 /// Any implementation must guarantee that the implementing type has a member
