@@ -201,12 +201,12 @@ where
     }
 
     /// Get a reference to the member field.
-    pub fn field(&self) -> &Container::Value {
+    pub fn field(&self) -> &'this Container::Value {
         self.field
     }
 
     /// Get a reference to the container.
-    pub fn container(&self) -> &Container {
+    pub fn container(&self) -> &'this Container {
         // SAFETY: We know `self.field` was gained via `Field::field_of()`,
         //         hence we know the entire container is borrowed. This is
         //         required for `container_of()`.
