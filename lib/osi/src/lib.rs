@@ -23,6 +23,7 @@ pub mod ffi;
 pub mod hash;
 pub mod hmac;
 pub mod json;
+pub mod marker;
 pub mod mem;
 pub mod meta;
 pub mod pin;
