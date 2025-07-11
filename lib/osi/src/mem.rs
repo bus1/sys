@@ -5,6 +5,46 @@
 
 use core::mem::transmute_copy;
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! crate_mem_typed_offset_of {
+    ($container:ty, $field:ident, $ty:ty $(,)?) => {
+        const {
+            let v = ::core::mem::MaybeUninit::<$container>::uninit();
+            let _: *const $ty = unsafe {
+                &raw const ((*v.as_ptr()).$field)
+            };
+            ::core::mem::offset_of!($container, $field)
+        }
+    }
+}
+
+/// Calculate a field offset and verify its type.
+///
+/// This yields the same value as [`core::mem::offset_of`] but additionally
+/// verifies that the type of the member field matches the type given as
+/// additional argument.
+///
+/// ## Limitations
+///
+/// Unlike [`core::mem::offset_of`], this function does not allow nested
+/// member paths due to limitations in the allowed macro argument types.
+///
+/// ## Example
+///
+/// ```rust
+/// struct Position {
+///     x: u32,
+///     y: u64,
+/// }
+/// assert_eq!(
+///     core::mem::offset_of!(Position, x),
+///     osi::mem::typed_offset_of!(Position, x, u32),
+/// );
+/// ```
+#[doc(inline)]
+pub use crate_mem_typed_offset_of as typed_offset_of;
+
 // Same as [`core::ptr::copy()`] but allows unaligned pointers.
 const unsafe fn copy_unaligned<T>(src: *const T, dst: *mut T, count: usize) {
     // SAFETY: We can always alias raw-pointers temporarily. Rust has no
