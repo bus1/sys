@@ -5,6 +5,26 @@
 
 use core::pin;
 
+/// Constructs a new pin by mapping the pointer.
+///
+/// This is an alternative to [`pin::Pin::map_unchecked`] but operates on the
+/// pointer rather than the pointee.
+///
+/// ## Safety
+///
+/// The caller must uphold the pinning guarantees as if the closure received
+/// a pinned value rather than an unpinned one, and as if it returned a pinned
+/// value. This is similar to the pin requirements for [`Drop::drop`].
+pub unsafe fn map_unchecked<T, U, F>(v: pin::Pin<T>, f: F) -> pin::Pin<U>
+where
+    T: core::ops::Deref,
+    U: core::ops::Deref,
+    F: FnOnce(T) -> U,
+{
+    // SAFETY: All requirements are relayed to the caller.
+    unsafe { pin::Pin::new_unchecked(f(pin::Pin::into_inner_unchecked(v))) }
+}
+
 /// Grant generic access to pinned member fields.
 ///
 /// This trait is a pinned alternative to [`crate::meta::Field`].
@@ -56,6 +76,24 @@ pub unsafe trait PinnedField<const OFFSET: usize, T>: Sized {
 mod test {
     use super::*;
     use crate::mem;
+
+    // Verify behavior of `map_unchecked()`.
+    #[test]
+    fn basic_map() {
+        let v = pin::pin!(71u16);
+        let r0: pin::Pin<&mut u16> = v;
+        assert_eq!(*r0, 71);
+
+        let r1: pin::Pin<&u16> = unsafe {
+            map_unchecked(r0, |v: &mut u16| -> &u16 { v })
+        };
+        assert_eq!(*r1, 71);
+
+        let r2: pin::Pin<&[u8; 2]> = unsafe {
+            map_unchecked(r1, |v: &u16| -> &[u8; 2] { &*(v as *const u16 as *const _) })
+        };
+        assert!(r2[0] == 71 || r2[1] == 71);
+    }
 
     #[derive(Clone, Copy, Debug, Default, PartialEq)]
     #[repr(C, align(4))]
