@@ -27,4 +27,5 @@ pub mod marker;
 pub mod mem;
 pub mod meta;
 pub mod pin;
+pub mod ptr;
 pub mod str;
