@@ -5,6 +5,24 @@
 
 use core::pin;
 
+/// Yield a const raw pointer to the target.
+pub fn as_ptr<T>(v: pin::Pin<T>) -> *const T::Target
+where
+    T: core::ops::Deref,
+{
+    // SAFETY: `pin::Pin` guarantees that `Deref` upholds its guarantees.
+    unsafe { &raw const *pin::Pin::into_inner_unchecked(v) }
+}
+
+/// Yield a mut raw pointer to the target.
+pub fn as_mut_ptr<T>(v: pin::Pin<T>) -> *mut T::Target
+where
+    T: core::ops::DerefMut,
+{
+    // SAFETY: `pin::Pin` guarantees that `DerefMut` upholds its guarantees.
+    unsafe { &raw mut *pin::Pin::into_inner_unchecked(v) }
+}
+
 /// Constructs a new pin by mapping the pointer.
 ///
 /// This is an alternative to [`pin::Pin::map_unchecked`] but operates on the
@@ -76,6 +94,16 @@ pub unsafe trait PinnedField<const OFFSET: usize, T>: Sized {
 mod test {
     use super::*;
     use crate::mem;
+
+    // Verify behavior of `as_[mut_]ptr()`.
+    #[test]
+    fn basic_as_ptr() {
+        let v = pin::pin!(71u16);
+        assert!(core::ptr::eq(&raw const *v, as_ptr(v)));
+
+        let mut v = pin::pin!(71u16);
+        assert!(core::ptr::eq(&raw mut *v, as_mut_ptr(v)));
+    }
 
     // Verify behavior of `map_unchecked()`.
     #[test]
