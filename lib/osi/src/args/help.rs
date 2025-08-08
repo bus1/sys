@@ -114,7 +114,7 @@ impl<'this> Help<'this> {
     ///
     /// Multiple independet flags can be created for the same shared `Help`
     /// object. They will share the underlying storage and override each other.
-    pub fn flag(&self) -> Flag {
+    pub fn flag(&self) -> Flag<'_, 'this> {
         Flag {
             help: self,
         }
