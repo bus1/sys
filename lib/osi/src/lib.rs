@@ -19,6 +19,7 @@ pub mod brand;
 pub mod cfg;
 pub mod cmp;
 pub mod compat;
+pub mod convert;
 pub mod error;
 pub mod ffi;
 pub mod hash;
