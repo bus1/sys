@@ -9,7 +9,7 @@
 ///
 // MSRV(1.89): This is available in the Rust standard library as
 //             [`core::ptr::NonNull::from_ref()`] but higher than our MSRV.
-pub const fn nonnull_from_ref<T>(v: &T) -> core::ptr::NonNull<T> {
+pub const fn nonnull_from_ref<T: ?Sized>(v: &T) -> core::ptr::NonNull<T> {
     // SAFETY: A reference cannot be null.
     unsafe { core::ptr::NonNull::new_unchecked(v as *const T as *mut T) }
 }
@@ -20,7 +20,7 @@ pub const fn nonnull_from_ref<T>(v: &T) -> core::ptr::NonNull<T> {
 ///
 // MSRV(1.89): This is available in the Rust standard library as
 //             [`core::ptr::NonNull::from_mut()`] but higher than our MSRV.
-pub const fn nonnull_from_mut<T>(v: &mut T) -> core::ptr::NonNull<T> {
+pub const fn nonnull_from_mut<T: ?Sized>(v: &mut T) -> core::ptr::NonNull<T> {
     // SAFETY: A reference cannot be null.
     unsafe { core::ptr::NonNull::new_unchecked(v as *mut T) }
 }
