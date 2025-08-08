@@ -109,7 +109,7 @@ impl OsStr {
     /// Return a Rust string for the value of this compatibility type. This
     /// will replace invalid Unicode sequences with the Unicode replacement
     /// character. See `alloc::string::String::from_utf8_lossy()` for details.
-    pub fn to_string_lossy(&self) -> alloc::borrow::Cow<str> {
+    pub fn to_string_lossy(&self) -> alloc::borrow::Cow<'_, str> {
         alloc::string::String::from_utf8_lossy(self.as_encoded_bytes())
     }
 }
