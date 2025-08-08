@@ -93,7 +93,6 @@ pub unsafe trait PinnedField<const OFFSET: usize, T>: Sized {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::mem;
 
     // Verify behavior of `as_[mut_]ptr()`.
     #[test]
@@ -131,7 +130,7 @@ mod test {
         c: u32,
     }
 
-    unsafe impl PinnedField<{mem::typed_offset_of!(Test, b, u8)}, u8> for Test {
+    unsafe impl PinnedField<{crate::mem::typed_offset_of!(Test, b, u8)}, u8> for Test {
     }
 
     // Basic functionality tests for `PinnedField`.
