@@ -139,10 +139,10 @@ pub struct DerefPtr<'a, T: ?Sized> {
     _ref: core::marker::PhantomData<&'a T>,
 }
 
-unsafe impl<'a, T: ?Sized + Send + Sync> Send for DerefPtr<'a, T> {
+unsafe impl<'a, T: ?Sized + Sync> Send for DerefPtr<'a, T> {
 }
 
-unsafe impl<'a, T: ?Sized + Send + Sync> Sync for DerefPtr<'a, T> {
+unsafe impl<'a, T: ?Sized + Sync> Sync for DerefPtr<'a, T> {
 }
 
 impl<'a, T: ?Sized> DerefPtr<'a, T> {
