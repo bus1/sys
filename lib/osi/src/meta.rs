@@ -76,10 +76,10 @@ pub unsafe trait Field<const OFFSET: usize, T: ?Sized> {
 /// Turn a container pointer into a member field pointer.
 ///
 /// This is equivalent to taking a raw pointer to a member field
-/// `&raw const (*container).field`. Note that the container is not
+/// `&raw mut (*container).field`. Note that the container is not
 /// dereferenced for this operation, since this merely needs a place
 /// expression.
-pub fn field_of_ptr<const OFFSET: usize, F, C>(v: *const C) -> *const F
+pub fn field_of_ptr<const OFFSET: usize, F, C>(v: *mut C) -> *mut F
 where
     C: ?Sized + Field<OFFSET, F>,
 {
@@ -103,7 +103,7 @@ where
     //         leave the allocation.
     //         Since we have the entire container borrowed, we can safely hand
     //         out sub-borrows.
-    unsafe { &*field_of_ptr(v) }
+    unsafe { &*field_of_ptr(v as *const C as *mut C) }
 }
 
 /// Turn a mutable container reference into a mutable member field reference.
@@ -123,7 +123,7 @@ where
     //         leave the allocation.
     //         Since we have the entire container borrowed, we can safely hand
     //         out sub-borrows.
-    unsafe { &mut *(field_of_ptr(v) as *mut _) }
+    unsafe { &mut *(field_of_ptr(v)) }
 }
 
 /// Turn a field pointer into a container pointer
@@ -141,7 +141,7 @@ where
 /// Otherwise, your code will likely not be compatible with Stacked Borrows.
 ///
 /// If you only require compatibility with Tree Borrows, this is not an issue.
-pub fn container_of_ptr<const OFFSET: usize, F, C>(v: *const F) -> *const C
+pub fn container_of_ptr<const OFFSET: usize, F, C>(v: *mut F) -> *mut C
 where
     C: Field<OFFSET, F>,
     F: ?Sized,
@@ -170,7 +170,7 @@ mod test {
         assert_eq!(core::mem::size_of::<Test>(), 8);
 
         let o = Test { a: 14, b: 11, c: 1444 };
-        let o_p = &raw const o;
+        let o_p = &raw const o as *mut Test;
 
         let f = field_of(&o);
         assert_eq!(*f, 11);
