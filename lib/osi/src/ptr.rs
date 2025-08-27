@@ -17,6 +17,35 @@ pub struct NonNull4<T: ?Sized> {
     ptr: core::ptr::NonNull<T>,
 }
 
+/// A singular pointer behaving like an immutable reference.
+///
+/// A `OnceRef` can be used multiple times, but only exists once for a given
+/// source reference, hence its name.
+///
+/// This type behaves like a normal reference `&'a T`, with the following
+/// differences:
+///
+/// - It does not implement [`Clone`] or [`Copy`]. That is, any reference
+///   created from it will necessarily borrow [`Self`] and thus cannot outlive
+///   it, even if `'a` is a significantly greater lifetime. This means, any
+///   function that consumes [`Self`] can safely assume that no reference
+///   derived from [`Self`] can exist.
+///   If other references to the same object existed before [`Self`] was
+///   created, they can still be used. However, if no such references existed,
+///   this instance will be guaranteed to be the only one.
+/// - It is always rooted in a raw pointer, rather than a reference. This has
+///   no visible effect, but might be relevant for compatibility with Stacked
+///   Borrows.
+/// - It is invariant over `T` (rather than covariant). This matches the
+///   behavior of `&'a mut T`.
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(transparent)]
+pub struct OnceRef<'a, T: ?Sized> {
+    ptr: core::ptr::NonNull<T>,
+    _ref: core::marker::PhantomData<&'a T>,
+    _mut: core::marker::PhantomData<&'a mut T>,
+}
+
 /// Convert an immutable reference to a `NonNull` pointer.
 ///
 /// This is equivalent to [`core::ptr::NonNull::from_ref()`].
@@ -177,6 +206,141 @@ impl<T: ?Sized> NonNull4<T> {
     }
 }
 
+impl<'a, T: ?Sized> OnceRef<'a, T> {
+    /// Create a new instance from a [`NonNull`](core::ptr::NonNull).
+    ///
+    /// ## Safety
+    ///
+    /// When calling this method, you have to ensure that the pointer is
+    /// [convertible to a reference](core::ptr#pointer-to-reference-conversion).
+    pub unsafe fn from_nonnull(v: core::ptr::NonNull<T>) -> Self {
+        Self {
+            ptr: v,
+            _ref: Default::default(),
+            _mut: Default::default(),
+        }
+    }
+
+    /// Create a new instance from a raw pointer.
+    ///
+    /// ## Safety
+    ///
+    /// When calling this method, you have to ensure that the pointer is
+    /// [convertible to a reference](core::ptr#pointer-to-reference-conversion).
+    pub unsafe fn from_ptr(v: *mut T) -> Self {
+        unsafe { Self::from_nonnull(core::ptr::NonNull::new_unchecked(v)) }
+    }
+
+    /// Create a new instance from a reference.
+    pub fn from_ref(v: &'a T) -> Self {
+        unsafe { Self::from_nonnull(crate::ptr::nonnull_from_ref(v)) }
+    }
+
+    /// Create a new instance from a mutable reference.
+    pub fn from_mut(v: &'a mut T) -> Self {
+        unsafe { Self::from_nonnull(crate::ptr::nonnull_from_mut(v)) }
+    }
+
+    /// Convert this into its underlying [`NonNull`](core::ptr::NonNull).
+    pub fn into_nonnull(self) -> core::ptr::NonNull<T> {
+        self.ptr
+    }
+
+    /// Convert this into its underlying raw pointer.
+    pub fn into_ptr(self) -> *mut T {
+        self.ptr.as_ptr()
+    }
+
+    /// Convert this into a proper reference.
+    pub fn into_ref(self) -> &'a T {
+        // SAFETY: The underlying pointer is guaranteed to be convertible to a
+        //         reference.
+        unsafe { self.ptr.as_ref() }
+    }
+
+    /// Convert this into a proper mutable reference.
+    ///
+    /// ## Safety
+    ///
+    /// While [`Self`] is guaranteed to be
+    /// [convertible to a reference](core::ptr#pointer-to-reference-conversion),
+    /// the caller must ensure sufficient exclusiveness guarantees.
+    ///
+    /// If [`Self`] was created from a mutable reference, this is always safe
+    /// to call.
+    pub unsafe fn into_mut(mut self) -> &'a mut T {
+        // SAFETY: The underlying pointer is guaranteed to be convertible to a
+        //         reference. Exclusiveness guarantees are propagated to the
+        //         caller.
+        unsafe { self.ptr.as_mut() }
+    }
+
+    /// Borrow the underlying [`NonNull`](core::ptr::NonNull).
+    pub fn as_nonnull(&self) -> core::ptr::NonNull<T> {
+        self.ptr
+    }
+
+    /// Borrow the underlying raw pointer.
+    pub fn as_ptr(&self) -> *mut T {
+        self.ptr.as_ptr()
+    }
+
+    /// Dereference this wrapper to the pointed object.
+    pub fn as_ref(&self) -> &T {
+        unsafe { self.ptr.as_ref() }
+    }
+
+    /// Mutably dereference this wrapper to the pointed object.
+    ///
+    /// ## Safety
+    ///
+    /// While [`Self`] is guaranteed to be
+    /// [convertible to a reference](core::ptr#pointer-to-reference-conversion),
+    /// the caller must ensure sufficient exclusiveness guarantees.
+    ///
+    /// If [`Self`] was created from a mutable reference, this is always safe
+    /// to call.
+    pub unsafe fn as_mut(&mut self) -> &mut T {
+        unsafe { self.ptr.as_mut() }
+    }
+}
+
+/// Since [`Self`] tries to preserve invariants of immutable and mutable
+/// references, both their bounds are required for [`Self`] to be [`Send`].
+unsafe impl<'a, T: ?Sized + Send + Sync> Send for OnceRef<'a, T> {
+}
+
+/// Since [`Sync`] is the required bound for both immutable and mutable
+/// references to implement [`Sync`], it is a sufficient bound for [`Self`].
+unsafe impl<'a, T: ?Sized + Sync> Sync for OnceRef<'a, T> {
+}
+
+impl<'a, T: ?Sized> core::ops::Deref for OnceRef<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        self.as_ref()
+    }
+}
+
+impl<'a, T: ?Sized> From<OnceRef<'a, T>> for core::ptr::NonNull<T> {
+    fn from(v: OnceRef<'a, T>) -> Self {
+        v.into_nonnull()
+    }
+}
+
+impl<'a, T: ?Sized> From<OnceRef<'a, T>> for *const T {
+    fn from(v: OnceRef<'a, T>) -> Self {
+        v.into_ptr()
+    }
+}
+
+impl<'a, T: ?Sized> From<OnceRef<'a, T>> for *mut T {
+    fn from(v: OnceRef<'a, T>) -> Self {
+        v.into_ptr()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -311,5 +475,20 @@ mod test {
         unsafe { nn4.set_ptr_unchecked(nn_clean1) };
         assert_eq!(nn4.ptr(), nn_clean1);
         assert_eq!(nn4.meta(), 2);
+    }
+
+    #[test]
+    fn basic_onceref() {
+        let mut v = 71;
+        let p = &raw mut v;
+
+        let r = OnceRef::from_mut(&mut v);
+        assert_eq!(*r, 71);
+        assert_eq!(r.as_ptr(), p);
+
+        let r = OnceRef::from_ref(&v);
+        assert_eq!(*r, 71);
+        assert_eq!(r.as_ptr(), p);
+        assert_eq!(*r.into_ref(), 71);
     }
 }
