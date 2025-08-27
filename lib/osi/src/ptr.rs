@@ -20,7 +20,7 @@ pub struct NonNull4<T: ?Sized> {
 /// Convert an immutable reference to a `NonNull` pointer.
 ///
 /// This is equivalent to [`core::ptr::NonNull::from_ref()`].
-///
+//
 // MSRV(1.89): This is available in the Rust standard library as
 //             [`core::ptr::NonNull::from_ref()`] but higher than our MSRV.
 pub const fn nonnull_from_ref<T: ?Sized>(v: &T) -> core::ptr::NonNull<T> {
@@ -31,12 +31,34 @@ pub const fn nonnull_from_ref<T: ?Sized>(v: &T) -> core::ptr::NonNull<T> {
 /// Convert a mutable reference to a `NonNull` pointer.
 ///
 /// This is equivalent to [`core::ptr::NonNull::from_mut()`].
-///
+//
 // MSRV(1.89): This is available in the Rust standard library as
 //             [`core::ptr::NonNull::from_mut()`] but higher than our MSRV.
 pub const fn nonnull_from_mut<T: ?Sized>(v: &mut T) -> core::ptr::NonNull<T> {
     // SAFETY: A reference cannot be null.
     unsafe { core::ptr::NonNull::new_unchecked(v as *mut T) }
+}
+
+/// Convert a pinned reference to a `NonNull` pointer.
+pub fn nonnull_from_pin_ref<T>(v: core::pin::Pin<T>) -> core::ptr::NonNull<T::Target>
+where
+    T: core::ops::Deref,
+{
+    // SAFETY: A pin cannot be null.
+    unsafe { core::ptr::NonNull::new_unchecked(crate::pin::as_ptr(v) as *mut _) }
+}
+
+/// Convert a pinned mutable reference to a `NonNull` pointer.
+///
+/// This yields the same value as [`nonnull_from_pin_ref()`] but ensures the
+/// pointer is created from a mutable reference via [`core::ops::DerefMut`].
+/// This can be relevant when striving for compatibility with Stacked Borrows.
+pub fn nonnull_from_pin_mut<T>(v: core::pin::Pin<T>) -> core::ptr::NonNull<T::Target>
+where
+    T: core::ops::DerefMut,
+{
+    // SAFETY: A pin cannot be null.
+    unsafe { core::ptr::NonNull::new_unchecked(crate::pin::as_mut_ptr(v)) }
 }
 
 impl<T: ?Sized> NonNull4<T> {
@@ -183,6 +205,30 @@ mod test {
 
         assert_eq!(*r0, 71);
         assert!(core::ptr::eq(r0, r1.as_ptr()));
+    }
+
+    // Verify `nonnull_from_pin_ref()`.
+    #[test]
+    fn basic_nonnull_from_pin_ref() {
+        let v = core::pin::pin!(71u16);
+        let r0 = crate::pin::as_ptr(v.as_ref());
+        let r1 = nonnull_from_pin_ref(v.as_ref());
+        let r2 = nonnull_from_pin_ref(v);
+
+        assert!(core::ptr::eq(r0, r1.as_ptr()));
+        assert!(core::ptr::eq(r0, r2.as_ptr()));
+    }
+
+    // Verify `nonnull_from_pin_mut()`.
+    #[test]
+    fn basic_nonnull_from_pin_mut() {
+        let mut v = core::pin::pin!(71u16);
+        let r0 = crate::pin::as_mut_ptr(v.as_mut());
+        let r1 = nonnull_from_pin_mut(v.as_mut());
+        let r2 = nonnull_from_pin_mut(v);
+
+        assert!(core::ptr::eq(r0, r1.as_ptr()));
+        assert!(core::ptr::eq(r0, r2.as_ptr()));
     }
 
     #[test]
