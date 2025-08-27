@@ -5,6 +5,21 @@
 
 use core::pin;
 
+/// Borrow the inner pointer of a pinned pointer.
+///
+/// This exposes the inner pointer of a pinned pointer. This is unsafe, as it
+/// allows circumventing the pinning guarantees.
+///
+/// ## Safety
+///
+/// The caller must uphold the pinning guarantees while using the returned
+/// reference.
+pub unsafe fn as_inner<T>(v: &pin::Pin<T>) -> &T {
+    // SAFETY: `Pin` is guaranteed to be `repr(transparent)`. All other
+    //         safety requirements are propagated.
+    core::mem::transmute(v)
+}
+
 /// Yield a const raw pointer to the target.
 pub fn as_ptr<T>(v: pin::Pin<T>) -> *const T::Target
 where
@@ -46,6 +61,18 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+
+    // Verify behavior of `as_inner()`.
+    #[test]
+    fn basic_as_inner() {
+        let v = alloc::boxed::Box::pin(71u16);
+        assert!(
+            core::ptr::eq(
+                as_ptr(v.as_ref()),
+                unsafe { &raw const **as_inner(&v) },
+            ),
+        );
+    }
 
     // Verify behavior of `as_[mut_]ptr()`.
     #[test]
