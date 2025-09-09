@@ -2,6 +2,22 @@
 //!
 //! This module contains utilities to manage memory through raw pointers and
 //! convert them to/from safe Rust types.
+//!
+//! ## Conversion
+// ^This title is linked to via [](osi::ptr#conversion) so keep it stable.
+//!
+//! The Rust standard library defines rules for converting pointers to a
+//! reference, as well as for dereferencing pointers (see
+//! [core::ptr#Safety](core::ptr#safety), and
+//! [core::ptr#Conversion](core::ptr#pointer-to-reference-conversion)).
+//! Whenever the documentation here mentions `convertible to a reference`,
+//! these documents define the precise requirements.
+//!
+//! In addition to the official documentation, if no specific reference type
+//! is mentioned, then `convertible to a reference` does not include the
+//! aliasing requirements. That is, those requirements need only to be upheld
+//! if an explicit reference type is used (i.e., `convertible to a
+//! {mutable,shared} reference`).
 
 /// A [`core::ptr::NonNull`] but 4-byte aligned.
 ///
@@ -15,6 +31,20 @@
 #[repr(transparent)]
 pub struct NonNull4<T: ?Sized> {
     ptr: core::ptr::NonNull<T>,
+}
+
+/// Lifetime annotated pointers behave like `NonNull<T>` but point to a valid
+/// allocation for the given lifetime.
+///
+/// Unlike references, `Ptr` does not make any guarantees about immutability or
+/// aliasing of the target allocation.
+///
+/// A `Ptr` is always [convertible to a reference](self#conversion).
+#[repr(transparent)]
+pub struct Ptr<'a, T: ?Sized> {
+    inner: core::ptr::NonNull<T>,
+    _ref: core::marker::PhantomData<&'a T>,
+    _mut: core::marker::PhantomData<&'a mut T>,
 }
 
 /// A singular pointer behaving like an immutable reference.
@@ -203,6 +233,177 @@ impl<T: ?Sized> NonNull4<T> {
     /// Modify metadata bit 1 while retaining everything else.
     pub fn set1(&mut self, flag: bool) {
         self.set_meta_bit(1, flag)
+    }
+}
+
+impl<'a, T: ?Sized> Ptr<'a, T> {
+    /// Create a new instance from a [`NonNull`](core::ptr::NonNull).
+    ///
+    /// ## Safety
+    ///
+    /// `v` must be [convertible to a reference](self#conversion) for the
+    /// lifetime `'a`.
+    pub const unsafe fn new(v: core::ptr::NonNull<T>) -> Self {
+        Self {
+            inner: v,
+            _ref: core::marker::PhantomData,
+            _mut: core::marker::PhantomData,
+        }
+    }
+
+    /// Create a new instance from a raw pointer.
+    ///
+    /// ## Safety
+    ///
+    /// `v` must be [convertible to a reference](self#conversion) for the
+    /// lifetime `'a`.
+    pub const unsafe fn from_ptr(v: *mut T) -> Self {
+        unsafe { Self::new(core::ptr::NonNull::new_unchecked(v)) }
+    }
+
+    /// Create a new instance from a shared reference.
+    pub const fn from_ref(v: &'a T) -> Self {
+        // SAFETY: References are naturally convertible to a reference for
+        //         their entire lifetime.
+        unsafe { Self::new(crate::ptr::nonnull_from_ref(v)) }
+    }
+
+    /// Convert this into its underlying [`NonNull`](core::ptr::NonNull).
+    pub const fn into_nonnull(self) -> core::ptr::NonNull<T> {
+        self.inner
+    }
+
+    /// Convert this into its underlying raw pointer.
+    pub const fn into_ptr(self) -> *mut T {
+        self.inner.as_ptr()
+    }
+
+    /// Convert this into a proper reference.
+    ///
+    /// ## Safety
+    ///
+    /// The aliasing requirements of shared references must be guaranteed.
+    pub const unsafe fn into_ref(self) -> &'a T {
+        // SAFETY: Propagated to caller.
+        unsafe { self.inner.as_ref() }
+    }
+
+    /// Convert this into a proper mutable reference.
+    ///
+    /// ## Safety
+    ///
+    /// The aliasing requirements of mutable references must be guaranteed.
+    pub const unsafe fn into_mut(mut self) -> &'a mut T {
+        // SAFETY: Propagated to caller.
+        unsafe { self.inner.as_mut() }
+    }
+
+    /// Borrow the underlying [`NonNull`](core::ptr::NonNull).
+    pub const fn as_nonnull(&self) -> core::ptr::NonNull<T> {
+        self.inner
+    }
+
+    /// Borrow the underlying raw pointer.
+    pub const fn as_ptr(&self) -> *mut T {
+        self.inner.as_ptr()
+    }
+
+    /// Dereference this wrapper to the pointed object.
+    ///
+    /// ## Safety
+    ///
+    /// The aliasing requirements of shared references must be guaranteed.
+    pub const unsafe fn as_ref(&self) -> &T {
+        unsafe { self.inner.as_ref() }
+    }
+
+    /// Mutably dereference this wrapper to the pointed object.
+    ///
+    /// ## Safety
+    ///
+    /// The aliasing requirements of mutable references must be guaranteed.
+    pub const unsafe fn as_mut(&mut self) -> &mut T {
+        unsafe { self.inner.as_mut() }
+    }
+}
+
+// `Ref` behaves like `&'a T` and `&'a mut T` combined.
+unsafe impl<'a, T: ?Sized + Send + Sync> Send for Ptr<'a, T> {
+}
+
+// `Ref` behaves like `&'a T` and `&'a mut T` combined.
+unsafe impl<'a, T: ?Sized + Sync> Sync for Ptr<'a, T> {
+}
+
+impl<'a, T: ?Sized> core::clone::Clone for Ptr<'a, T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<'a, T: ?Sized> core::marker::Copy for Ptr<'a, T> {
+}
+
+impl<'a, T: ?Sized> core::fmt::Debug for Ptr<'a, T> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        fmt.debug_tuple("Ptr").field(&self.inner).finish()
+    }
+}
+
+impl<'a, T: ?Sized> core::cmp::Eq for Ptr<'a, T> {
+}
+
+impl<'a, T: ?Sized> core::hash::Hash for Ptr<'a, T> {
+    fn hash<Op>(&self, state: &mut Op)
+    where
+        Op: core::hash::Hasher,
+    {
+        self.inner.hash(state)
+    }
+}
+
+impl<'a, T: ?Sized> core::cmp::Ord for Ptr<'a, T> {
+    #[allow(ambiguous_wide_pointer_comparisons)]
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        self.inner.cmp(&other.inner)
+    }
+}
+
+impl<'a, T: ?Sized> core::cmp::PartialEq for Ptr<'a, T> {
+    #[allow(ambiguous_wide_pointer_comparisons)]
+    fn eq(&self, other: &Self) -> bool {
+        self.inner.eq(&other.inner)
+    }
+}
+
+impl<'a, T: ?Sized> core::cmp::PartialOrd for Ptr<'a, T> {
+    #[allow(ambiguous_wide_pointer_comparisons)]
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        self.inner.partial_cmp(&other.inner)
+    }
+}
+
+impl<'a, T: ?Sized> From<&'a T> for Ptr<'a, T> {
+    fn from(v: &'a T) -> Self {
+        Self::from_ref(v)
+    }
+}
+
+impl<'a, T: ?Sized> From<Ptr<'a, T>> for core::ptr::NonNull<T> {
+    fn from(v: Ptr<'a, T>) -> Self {
+        v.into_nonnull()
+    }
+}
+
+impl<'a, T: ?Sized> From<Ptr<'a, T>> for *mut T {
+    fn from(v: Ptr<'a, T>) -> Self {
+        v.into_ptr()
+    }
+}
+
+impl<'a, T: ?Sized> From<Ptr<'a, T>> for *const T {
+    fn from(v: Ptr<'a, T>) -> Self {
+        v.into_ptr()
     }
 }
 
@@ -475,6 +676,18 @@ mod test {
         unsafe { nn4.set_ptr_unchecked(nn_clean1) };
         assert_eq!(nn4.ptr(), nn_clean1);
         assert_eq!(nn4.meta(), 2);
+    }
+
+    #[test]
+    fn basic_ptr() {
+        let v = 71;
+        let p = &raw const v as *mut _;
+
+        let r = Ptr::from_ref(&v);
+        assert_eq!(unsafe { *r.as_ref() }, 71);
+        assert_eq!(r, r);
+        assert_eq!(r.as_ptr(), p);
+        assert_eq!(unsafe { *r.into_ref() }, 71);
     }
 
     #[test]
