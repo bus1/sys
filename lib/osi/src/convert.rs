@@ -129,24 +129,6 @@ pub unsafe trait FromDeref: Sized + core::ops::Deref {
     }
 }
 
-impl<'a, T> From<T> for OnceRef<'a, T::Target>
-where
-    T: 'a + core::ops::Deref + IntoDeref,
-{
-    fn from(v: T) -> Self {
-        IntoDeref::into_deref(v)
-    }
-}
-
-impl<'a, T> From<pin::Pin<T>> for pin::Pin<OnceRef<'a, T::Target>>
-where
-    T: 'a + core::ops::Deref + IntoDeref,
-{
-    fn from(v: pin::Pin<T>) -> Self {
-        IntoDeref::pin_into_deref(v)
-    }
-}
-
 mod lib {
     use super::*;
     use alloc::{boxed::Box, rc::Rc, sync::Arc};
@@ -255,7 +237,7 @@ mod test {
             let f: Box<u64> = Box::new(v);
             let p: *const u64 = &raw const *f;
 
-            let d: OnceRef<u64> = f.into();
+            let d: OnceRef<u64> = IntoDeref::into_deref(f);
             assert_eq!(71, *d);
             assert!(core::ptr::eq(p, d.as_ptr()));
 
@@ -268,7 +250,7 @@ mod test {
             let f: Rc<u64> = Rc::new(v);
             let p: *const u64 = &raw const *f;
 
-            let d: OnceRef<u64> = f.into();
+            let d: OnceRef<u64> = IntoDeref::into_deref(f);
             assert_eq!(71, *d);
             assert!(core::ptr::eq(p, d.as_ptr()));
 
@@ -281,7 +263,7 @@ mod test {
             let f: Arc<u64> = Arc::new(v);
             let p: *const u64 = &raw const *f;
 
-            let d: OnceRef<u64> = f.into();
+            let d: OnceRef<u64> = IntoDeref::into_deref(f);
             assert_eq!(71, *d);
             assert!(core::ptr::eq(p, d.as_ptr()));
 

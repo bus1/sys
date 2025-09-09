@@ -442,6 +442,20 @@ impl<'a, T: ?Sized> OnceRef<'a, T> {
         unsafe { Self::from_nonnull(crate::ptr::nonnull_from_mut(v)) }
     }
 
+    /// Create a new pinned instance from a pinned reference.
+    pub fn pin_from_ref(v: core::pin::Pin<&'a T>) -> core::pin::Pin<Self> {
+        // SAFETY: `OnceRef` honors pinning guarantees, so we can always wrap
+        //         pinned references.
+        unsafe { crate::pin::map_unchecked(v, Self::from_ref) }
+    }
+
+    /// Create a new pinned instance from a pinned mutable reference.
+    pub fn pin_from_mut(v: core::pin::Pin<&'a mut T>) -> core::pin::Pin<Self> {
+        // SAFETY: `OnceRef` honors pinning guarantees, so we can always wrap
+        //         pinned references.
+        unsafe { crate::pin::map_unchecked(v, Self::from_mut) }
+    }
+
     /// Convert this into its underlying [`NonNull`](core::ptr::NonNull).
     pub fn into_nonnull(self) -> core::ptr::NonNull<T> {
         self.ptr
@@ -521,6 +535,30 @@ impl<'a, T: ?Sized> core::ops::Deref for OnceRef<'a, T> {
 
     fn deref(&self) -> &Self::Target {
         self.as_ref()
+    }
+}
+
+impl<'a, T: ?Sized> From<&'a T> for OnceRef<'a, T> {
+    fn from(v: &'a T) -> Self {
+        Self::from_ref(v)
+    }
+}
+
+impl<'a, T: ?Sized> From<&'a mut T> for OnceRef<'a, T> {
+    fn from(v: &'a mut T) -> Self {
+        Self::from_mut(v)
+    }
+}
+
+impl<'a, T: ?Sized> From<core::pin::Pin<&'a T>> for core::pin::Pin<OnceRef<'a, T>> {
+    fn from(v: core::pin::Pin<&'a T>) -> Self {
+        OnceRef::pin_from_ref(v)
+    }
+}
+
+impl<'a, T: ?Sized> From<core::pin::Pin<&'a mut T>> for core::pin::Pin<OnceRef<'a, T>> {
+    fn from(v: core::pin::Pin<&'a mut T>) -> Self {
+        OnceRef::pin_from_mut(v)
     }
 }
 
