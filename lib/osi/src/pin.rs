@@ -21,12 +21,12 @@ pub unsafe fn as_inner<T>(v: &pin::Pin<T>) -> &T {
 }
 
 /// Yield a const raw pointer to the target.
-pub fn as_ptr<T>(v: pin::Pin<T>) -> *const T::Target
+pub fn as_ptr<T>(v: pin::Pin<T>) -> *mut T::Target
 where
     T: core::ops::Deref,
 {
     // SAFETY: `pin::Pin` guarantees that `Deref` upholds its guarantees.
-    unsafe { &raw const *pin::Pin::into_inner_unchecked(v) }
+    unsafe { &raw const *pin::Pin::into_inner_unchecked(v) as *mut _ }
 }
 
 /// Yield a mut raw pointer to the target.
