@@ -1,9 +1,15 @@
 [workspace]
-members = ["lib/*"]
+members = [
+        "lib/osi",
+        "lib/sys",
+        "lib/tmp",
+]
 resolver = "2"
 
 default-members = [
-        "lib/*",
+        "lib/osi",
+        "lib/sys",
+        "lib/tmp",
 ]
 
 [workspace.package]
