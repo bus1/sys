@@ -22,13 +22,13 @@ homepage = "https://www.bus1.eu"
 license = "MIT OR Apache-2.0 OR LGPL-2.1-or-later"
 readme = "README.md"
 repository = "https://github.com/bus1/sys"
-rust-version = "1.83"
+rust-version = "1.74"
 
 [workspace.dependencies]
-libc = { default-features = false, version = "0.2.172" }
-osi = { path = "./lib/osi", version = "0.0.1" }
-sys = { path = "./lib/sys", version = "0.0.1" }
-tmp = { path = "./lib/tmp", version = "0.0.1" }
+libc = { default-features = false, version = "0.2.175" }
+osi = { path = "./lib/osi", version = "1.0.0" }
+sys = { path = "./lib/sys", version = "1.0.0" }
+tmp = { path = "./lib/tmp", version = "1.0.0" }
 
 [workspace.lints.clippy]
 identity_op = "allow"

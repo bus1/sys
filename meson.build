@@ -9,7 +9,7 @@ project(
         ],
         license: 'MIT OR Apache-2.0 OR LGPL-2.1-or-later',
         meson_version: '>=1.3',
-        version: '1',
+        version: '1.0.0',
 )
 
 add_languages('rust', native: false)
