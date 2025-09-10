@@ -48,7 +48,7 @@ env:
     -D werror=true
 
     -D doctest=true
-    -D libc=true
+    -D libc=false
 
 jobs:
   #
