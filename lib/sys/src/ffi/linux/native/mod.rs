@@ -24,7 +24,7 @@ osi::cfg::cond! {
         mod inner;
     },
     (feature = "libc") {
-        use super::libc::inner as inner;
+        use super::libc as inner;
     },
     {
         mod inner {}
