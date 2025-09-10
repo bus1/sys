@@ -1,0 +1,2 @@
+option('doctest', type: 'boolean', value: false, description: 'Test code of documentation')
+option('libc', type: 'boolean', value: false, description: 'Use libc-rs as backend')
