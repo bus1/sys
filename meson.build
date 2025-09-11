@@ -99,7 +99,7 @@ use_std = get_option('std')
 libosi_rlib_rust_args = []
 
 if use_std
-        libosi_rlib_rust_args += ['--cfg=std']
+        libosi_rlib_rust_args += ['--cfg=feature="std"']
 endif
 
 libosi_rlib = static_library(
@@ -124,11 +124,11 @@ libsys_rlib_rust_args = []
 
 if use_libc
         libsys_rlib_deps += [dep_libc]
-        libsys_rlib_rust_args += ['--cfg=libc']
+        libsys_rlib_rust_args += ['--cfg=feature="libc"']
 endif
 
 if use_std
-        libsys_rlib_rust_args += ['--cfg=std']
+        libsys_rlib_rust_args += ['--cfg=feature="std"']
 endif
 
 libsys_rlib = static_library(
