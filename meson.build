@@ -87,12 +87,25 @@ if use_libc
 endif
 
 #
+# Config: std
+#
+
+use_std = get_option('std')
+
+#
 # Target: libosi
 #
+
+libosi_rlib_rust_args = []
+
+if use_std
+        libosi_rlib_rust_args += ['--cfg=std']
+endif
 
 libosi_rlib = static_library(
         'osi',
         ['lib/osi/src/lib.rs'],
+        rust_args: libosi_rlib_rust_args,
 )
 
 libosi_dep = declare_dependency(
@@ -112,6 +125,10 @@ libsys_rlib_rust_args = []
 if use_libc
         libsys_rlib_deps += [dep_libc]
         libsys_rlib_rust_args += ['--cfg=libc']
+endif
+
+if use_std
+        libsys_rlib_rust_args += ['--cfg=std']
 endif
 
 libsys_rlib = static_library(
