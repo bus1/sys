@@ -13,7 +13,7 @@ use crate::{align, ffi};
 /// Most importantly, this type allows to explicitly define its properties:
 ///
 /// - **Alignment**: The alignment always matches exactly that given by
-///                  `Alignment`.
+///   `Alignment`.
 ///
 /// - **Size**: The size and encoding of the type matches that of `Value`,
 ///   unless the requested alignment exceeds its size. In that case, trailing
