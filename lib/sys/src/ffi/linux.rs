@@ -56,6 +56,8 @@
 //    `./<platform>.rs`, to ensure the platform directory exists and our usage
 //    of `path = "../[...]"` works.
 
+#![allow(clippy::duplicate_mod)]
+
 #[cfg(test)]
 mod test;
 
