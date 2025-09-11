@@ -40,7 +40,7 @@ impl<T: core::ops::Deref> core::cmp::PartialEq for Identity<T> {
 
 impl<T: core::ops::Deref> core::cmp::PartialOrd for Identity<T> {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        (&raw const *self.0).partial_cmp(&&raw const *other.0)
+        Some(self.cmp(other))
     }
 }
 

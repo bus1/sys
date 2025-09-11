@@ -197,7 +197,7 @@ where
     <Self as Aligned>::Align: core::clone::Clone,
 {
     fn clone(&self) -> Self {
-        Self(self.0.clone())
+        *self
     }
 }
 
@@ -286,7 +286,7 @@ where
     Of::Align: core::clone::Clone,
 {
     fn clone(&self) -> Self {
-        Self(self.0.clone())
+        *self
     }
 }
 

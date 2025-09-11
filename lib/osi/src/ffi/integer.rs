@@ -174,7 +174,7 @@ where
 {
     #[inline]
     fn clone(&self) -> Self {
-        Self::new(self.get())
+        *self
     }
 }
 

@@ -379,7 +379,7 @@ impl<'a, T: ?Sized> core::cmp::PartialEq for Ptr<'a, T> {
 impl<'a, T: ?Sized> core::cmp::PartialOrd for Ptr<'a, T> {
     #[allow(ambiguous_wide_pointer_comparisons)]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        self.inner.partial_cmp(&other.inner)
+        Some(self.cmp(other))
     }
 }
 

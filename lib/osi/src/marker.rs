@@ -96,8 +96,8 @@ impl<T: ?Sized> core::cmp::PartialEq for PhantomInvariant<T> {
 }
 
 impl<T: ?Sized> core::cmp::PartialOrd for PhantomInvariant<T> {
-    fn partial_cmp(&self, _: &Self) -> Option<core::cmp::Ordering> {
-        Some(core::cmp::Ordering::Equal)
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
