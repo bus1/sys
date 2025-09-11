@@ -32,6 +32,7 @@ tmp = { path = "./lib/tmp", version = "1.0.0" }
 
 [workspace.lints.clippy]
 identity_op = "allow"
+manual_range_contains = "allow"
 redundant_field_names = "allow"
 should_implement_trait = "allow"
 type_complexity = "allow"
