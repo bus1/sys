@@ -29,10 +29,3 @@ libc = { default-features = false, version = "0.2.175" }
 osi = { path = "./lib/osi", version = "1.0.0" }
 sys = { path = "./lib/sys", version = "1.0.0" }
 tmp = { path = "./lib/tmp", version = "1.0.0" }
-
-[workspace.lints.clippy]
-identity_op = "allow"
-manual_range_contains = "allow"
-redundant_field_names = "allow"
-should_implement_trait = "allow"
-type_complexity = "allow"

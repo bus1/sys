@@ -5,6 +5,11 @@
 //! particular runtime, but can optionally be combined with the Rust Standard
 //! Library.
 
+#![allow(clippy::identity_op)]
+#![allow(clippy::manual_range_contains)]
+#![allow(clippy::should_implement_trait)]
+#![allow(clippy::redundant_field_names)]
+
 #![no_std]
 
 extern crate alloc;
