@@ -668,32 +668,32 @@ mod test {
         assert_eq!(NonNull4::new(nn_clean0), Some(nn4));
         assert_eq!(nn4.ptr(), nn_clean0);
         assert_eq!(nn4.meta(), 0);
-        assert_eq!(nn4.get0(), false);
-        assert_eq!(nn4.get1(), false);
+        assert!(!nn4.get0());
+        assert!(!nn4.get1());
 
         nn4.set0(true);
         assert_eq!(nn4.ptr(), nn_clean0);
         assert_eq!(nn4.meta(), 1);
-        assert_eq!(nn4.get0(), true);
-        assert_eq!(nn4.get1(), false);
+        assert!(nn4.get0());
+        assert!(!nn4.get1());
 
         nn4.set1(true);
         assert_eq!(nn4.ptr(), nn_clean0);
         assert_eq!(nn4.meta(), 3);
-        assert_eq!(nn4.get0(), true);
-        assert_eq!(nn4.get1(), true);
+        assert!(nn4.get0());
+        assert!(nn4.get1());
 
         nn4.set0(false);
         assert_eq!(nn4.ptr(), nn_clean0);
         assert_eq!(nn4.meta(), 2);
-        assert_eq!(nn4.get0(), false);
-        assert_eq!(nn4.get1(), true);
+        assert!(!nn4.get0());
+        assert!(nn4.get1());
 
         nn4.set1(false);
         assert_eq!(nn4.ptr(), nn_clean0);
         assert_eq!(nn4.meta(), 0);
-        assert_eq!(nn4.get0(), false);
-        assert_eq!(nn4.get1(), false);
+        assert!(!nn4.get0());
+        assert!(!nn4.get1());
 
         unsafe { nn4.set_ptr_unchecked(nn_clean1) };
         assert_eq!(nn4.ptr(), nn_clean1);

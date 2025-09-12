@@ -436,7 +436,10 @@ mod tests {
         let v: Test16 = Test16::new(71);
 
         // `Clone`
-        assert_eq!(v.clone().into_inner(), 71);
+        #[allow(clippy::clone_on_copy)]
+        {
+            assert_eq!(v.clone().into_inner(), 71);
+        }
 
         // `Copy`
         let c: Test16 = v;

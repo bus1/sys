@@ -644,8 +644,11 @@ mod tests {
         let l: LittleEndian<u32> = LittleEndian::from_native(r);
 
         // `Clone`
-        assert_eq!(b.clone().to_native(), r);
-        assert_eq!(l.clone().to_native(), r);
+        #[allow(clippy::clone_on_copy)]
+        {
+            assert_eq!(b.clone().to_native(), r);
+            assert_eq!(l.clone().to_native(), r);
+        }
 
         // `Copy`
         let bc: BigEndian<u32> = b;

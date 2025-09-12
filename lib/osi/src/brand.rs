@@ -69,6 +69,7 @@ impl<'brand> core::fmt::Debug for Unique<'brand> {
     }
 }
 
+#[allow(clippy::clone_on_copy)]
 #[cfg(test)]
 mod test {
     use super::*;

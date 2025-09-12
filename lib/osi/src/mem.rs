@@ -234,7 +234,7 @@ mod test {
         }
 
         #[derive(Clone, Copy)]
-        #[repr(packed)]
+        #[repr(C, packed)]
         struct Underaligned {
             v: u16,
         }

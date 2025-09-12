@@ -5,6 +5,7 @@
 //! particular runtime, but can optionally be combined with the Rust Standard
 //! Library.
 
+#![allow(clippy::assertions_on_constants)]
 #![allow(clippy::identity_op)]
 #![allow(clippy::manual_range_contains)]
 #![allow(clippy::should_implement_trait)]

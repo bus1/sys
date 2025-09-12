@@ -695,7 +695,10 @@ mod tests {
         let v: Pointer<u64, ()> = Pointer::new(71);
 
         // `Clone`
-        assert_eq!(v.clone().into_inner(), 71);
+        #[allow(clippy::clone_on_copy)]
+        {
+            assert_eq!(v.clone().into_inner(), 71);
+        }
 
         // `Copy`
         let c: Pointer<u64, ()> = v;

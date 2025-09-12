@@ -67,14 +67,14 @@ mod test {
         assert_ne!(Identity(v0r0), Identity(v1r0));
         assert_ne!(Identity(v0r0), Identity(v1r1));
 
-        assert!(!(v0r0 < v0r0));
-        assert!(!(v0r0 < v0r1));
-        assert!(!(v0r0 < v1r0));
-        assert!(!(v0r0 < v1r1));
-        assert!(!(v0r0 > v0r0));
-        assert!(!(v0r0 > v0r1));
-        assert!(!(v0r0 > v1r0));
-        assert!(!(v0r0 > v1r1));
+        assert!(v0r0 >= v0r0);
+        assert!(v0r0 >= v0r1);
+        assert!(v0r0 >= v1r0);
+        assert!(v0r0 >= v1r1);
+        assert!(v0r0 <= v0r0);
+        assert!(v0r0 <= v0r1);
+        assert!(v0r0 <= v1r0);
+        assert!(v0r0 <= v1r1);
 
         if &raw const v0 < &raw const v1 {
             assert!(Identity(v0r0) <= Identity(v0r0));
