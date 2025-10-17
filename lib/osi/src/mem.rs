@@ -218,7 +218,7 @@ mod test {
     // Verify `transmute_copy_uninit()` works in constant contexts.
     #[test]
     fn transmute_copy_uninit_const() {
-        const C: u16 = unsafe { transmute_copy_uninit(&71u32) };
+        const C: u32 = unsafe { transmute_copy_uninit(&71u32) };
 
         assert_eq!(C, 71);
     }
