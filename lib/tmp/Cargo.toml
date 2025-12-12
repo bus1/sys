@@ -19,6 +19,9 @@ readme.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[features]
+polonius = []
+
 [dependencies]
 osi = { workspace = true }
 sys = { workspace = true }
