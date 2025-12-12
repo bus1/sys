@@ -1,3 +1,4 @@
 option('doctest', type: 'boolean', value: false, description: 'Test code of documentation')
 option('libc', type: 'boolean', value: false, description: 'Use libc-rs as backend')
+option('polonius', type: 'boolean', value: false, description: 'Assume running under the Polonius borrow checker')
 option('std', type: 'boolean', value: false, description: 'Provide integration with the Rust standard library')
