@@ -31,4 +31,5 @@ osi::cfg::cond! {
     },
 }
 
+#[allow(unused)]
 pub use inner::*;
