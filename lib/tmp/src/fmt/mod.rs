@@ -4,3 +4,4 @@
 //! A selection of generic utilities is provided as well.
 
 pub mod dbus;
+pub mod json;
