@@ -739,6 +739,7 @@ impl<'sig, 'read> Dec<'sig, 'read> {
     }
 }
 
+#[allow(clippy::octal_escapes)]
 #[cfg(test)]
 mod test {
     use super::*;
