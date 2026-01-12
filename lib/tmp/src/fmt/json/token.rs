@@ -828,7 +828,7 @@ impl<'read> Dec<'read> {
             // correctness of Polonius.
             let fixed = {
                 osi::cfg::cond! {
-                    (feature = "polonius") { v },
+                    (polonius) { v },
                     {
                         // SAFETY: Workaround for NLL, unneeded with Polonius.
                         unsafe { core::mem::transmute(v) }
