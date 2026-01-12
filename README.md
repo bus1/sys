@@ -15,7 +15,7 @@ system specific interfaces.
 
 The requirements for this project are:
 
- * `rustc >= 1.83`
+ * `rustc >= 1.91`
 
 ### Repository:
 
