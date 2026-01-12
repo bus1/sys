@@ -21,3 +21,6 @@ rust-version.workspace = true
 
 [features]
 std = []
+
+[lints]
+workspace = true

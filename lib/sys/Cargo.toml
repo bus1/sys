@@ -26,3 +26,6 @@ std = []
 [dependencies]
 libc = { optional = true, workspace = true }
 osi = { workspace = true }
+
+[lints]
+workspace = true
