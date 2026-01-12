@@ -76,31 +76,31 @@ impl Format {
         }
     }
 
-    fn u8(&self, v: u8) -> [u8; 1] {
+    fn en_u8(&self, v: u8) -> [u8; 1] {
         [v]
     }
 
-    fn u16(&self, v: u16) -> [u8; 2] {
+    fn en_u16(&self, v: u16) -> [u8; 2] {
         if self.is_be() { v.to_be_bytes() } else { v.to_le_bytes() }
     }
 
-    fn u32(&self, v: u32) -> [u8; 4] {
+    fn en_u32(&self, v: u32) -> [u8; 4] {
         if self.is_be() { v.to_be_bytes() } else { v.to_le_bytes() }
     }
 
-    fn u64(&self, v: u64) -> [u8; 8] {
+    fn en_u64(&self, v: u64) -> [u8; 8] {
         if self.is_be() { v.to_be_bytes() } else { v.to_le_bytes() }
     }
 
-    fn to_u8(&self, v: [u8; 1]) -> u8 {
+    fn de_u8(&self, v: [u8; 1]) -> u8 {
         if self.is_be() { u8::from_be_bytes(v) } else { u8::from_le_bytes(v) }
     }
 
-    fn to_u16(&self, v: [u8; 2]) -> u16 {
+    fn de_u16(&self, v: [u8; 2]) -> u16 {
         if self.is_be() { u16::from_be_bytes(v) } else { u16::from_le_bytes(v) }
     }
 
-    fn to_u32(&self, v: [u8; 4]) -> u32 {
+    fn de_u32(&self, v: [u8; 4]) -> u32 {
         if self.is_be() { u32::from_be_bytes(v) } else { u32::from_le_bytes(v) }
     }
 }
@@ -256,7 +256,7 @@ impl<'sig, 'write> Enc<'sig, 'write> {
 
         let mut idx = self.level.idx;
         Self::align(self.write, &mut idx, dbus::Element::U8.dvar_alignment_exp())?;
-        Self::write(self.write, &mut idx, &self.format.u8(n))?;
+        Self::write(self.write, &mut idx, &self.format.en_u8(n))?;
         Self::write(self.write, &mut idx, data.as_bytes())?;
         Self::zero(self.write, &mut idx, 1)?;
         self.level.idx = idx;
@@ -279,7 +279,7 @@ impl<'sig, 'write> Enc<'sig, 'write> {
 
         let mut idx = self.level.idx;
         Self::align(self.write, &mut idx, dbus::Element::U32.dvar_alignment_exp())?;
-        Self::write(self.write, &mut idx, &self.format.u32(n))?;
+        Self::write(self.write, &mut idx, &self.format.en_u32(n))?;
         Self::write(self.write, &mut idx, data.as_bytes())?;
         Self::zero(self.write, &mut idx, 1)?;
         self.level.idx = idx;
@@ -289,15 +289,15 @@ impl<'sig, 'write> Enc<'sig, 'write> {
     }
 
     pub fn u16(&mut self, data: u16) -> Flow<Option<dbus::Error>, &mut Self> {
-        self.fixed(dbus::Element::U16, &self.format.u16(data))
+        self.fixed(dbus::Element::U16, &self.format.en_u16(data))
     }
 
     pub fn u32(&mut self, data: u32) -> Flow<Option<dbus::Error>, &mut Self> {
-        self.fixed(dbus::Element::U32, &self.format.u32(data))
+        self.fixed(dbus::Element::U32, &self.format.en_u32(data))
     }
 
     pub fn u64(&mut self, data: u64) -> Flow<Option<dbus::Error>, &mut Self> {
-        self.fixed(dbus::Element::U64, &self.format.u64(data))
+        self.fixed(dbus::Element::U64, &self.format.en_u64(data))
     }
 
     pub fn string(&mut self, data: &str) -> Flow<Option<dbus::Error>, &mut Self> {
@@ -325,7 +325,7 @@ impl<'sig, 'write> Enc<'sig, 'write> {
 
         let mut level = self.level.clone();
         Self::align(self.write, &mut level.idx, dbus::Element::U8.dvar_alignment_exp())?;
-        Self::write(self.write, &mut level.idx, &self.format.u8(n))?;
+        Self::write(self.write, &mut level.idx, &self.format.en_u8(n))?;
         Self::write_iter(self.write, &mut level.idx, &mut sig.into_iter().map(|v| v.code()))?;
         Self::zero(self.write, &mut level.idx, 1)?;
         level.meta = level.idx;
@@ -352,7 +352,7 @@ impl<'sig, 'write> Enc<'sig, 'write> {
         let align = self.cursor.down().unwrap().dvar_alignment_exp();
         Self::align(self.write, &mut level.idx, dbus::Element::U32.dvar_alignment_exp())?;
         level.meta = level.idx;
-        Self::write(self.write, &mut level.idx, &self.format.u32(0))?;
+        Self::write(self.write, &mut level.idx, &self.format.en_u32(0))?;
         Self::align(self.write, &mut level.idx, align)?;
         level.from = level.idx;
 
@@ -422,7 +422,7 @@ impl<'sig, 'write> Enc<'sig, 'write> {
                         return Flow::Break(Some(dbus::Error::DataOverflow));
                     };
                     let mut idx = self.level.meta;
-                    Self::write(self.write, &mut idx, &self.format.u32(n))?;
+                    Self::write(self.write, &mut idx, &self.format.en_u32(n))?;
                 }
             },
             dbus::Element::StructOpen => {
@@ -598,7 +598,7 @@ impl<'sig, 'read> Dec<'sig, 'read> {
         let mut len_u = [0; _];
         Self::align(self.read, &mut idx, dbus::Element::U8.dvar_alignment_exp())?;
         Self::read(self.read, &mut idx, &mut len_u)?;
-        let len = self.format.to_u8(len_u) as usize;
+        let len = self.format.de_u8(len_u) as usize;
 
         // Read the string.
         let mut buffer = alloc::vec::Vec::with_capacity(len);
@@ -637,7 +637,7 @@ impl<'sig, 'read> Dec<'sig, 'read> {
         let mut len_u = [0; _];
         Self::align(self.read, &mut idx, dbus::Element::U32.dvar_alignment_exp())?;
         Self::read(self.read, &mut idx, &mut len_u)?;
-        let len = self.format.to_u32(len_u) as usize;
+        let len = self.format.de_u32(len_u) as usize;
 
         // Read the string.
         let mut buffer = alloc::vec::Vec::with_capacity(len);
@@ -664,7 +664,7 @@ impl<'sig, 'read> Dec<'sig, 'read> {
     pub fn u16(&mut self, data: &mut u16) -> Flow<Option<dbus::Error>, &mut Self> {
         let mut v = [0; _];
         self.fixed(dbus::Element::U16, &mut v)?;
-        *data = self.format.to_u16(v);
+        *data = self.format.de_u16(v);
         Flow::Continue(self)
     }
 
@@ -687,7 +687,7 @@ impl<'sig, 'read> Dec<'sig, 'read> {
         let mut len_u = [0; _];
         Self::align(self.read, &mut level.idx, dbus::Element::U32.dvar_alignment_exp())?;
         Self::read(self.read, &mut level.idx, &mut len_u)?;
-        level.meta = self.format.to_u32(len_u) as usize;
+        level.meta = self.format.de_u32(len_u) as usize;
         Self::align(self.read, &mut level.idx, align)?;
 
         core::mem::swap(&mut level, &mut self.level);
