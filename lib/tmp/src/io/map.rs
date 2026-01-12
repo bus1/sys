@@ -63,6 +63,12 @@ pub trait Read {
 
 /// `Write` allows chunked mutable access to logically linear data.
 pub trait Write {
+    /// Commit data
+    ///
+    /// ## Safety
+    ///
+    /// The caller must ensure that the first `len` bytes of the map have been
+    /// initialized via [`Self::map()`] or one of its derivatives.
     unsafe fn commit(&mut self, len: usize);
 
     fn map(&mut self, idx: usize, len: usize) -> Flow<Option<Error>, &mut [Uninit<u8>]>;

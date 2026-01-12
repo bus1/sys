@@ -48,6 +48,7 @@ impl<'sig, 'write> Enc<'sig, 'write> {
 
         loop {
             if dec.more() {
+                #[allow(clippy::match_single_binding)]
                 match cur.element().unwrap() {
                     _ => core::unreachable!(),
                 }
