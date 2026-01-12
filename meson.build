@@ -98,6 +98,7 @@ use_std = get_option('std')
 
 rlib_rust_args = [
         '--check-cfg=cfg(feature, values("libc", "std"))',
+        '--check-cfg=cfg(polonius)',
         '--check-cfg=cfg(test)',
 ]
 

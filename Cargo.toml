@@ -32,3 +32,6 @@ tmp = { path = "./lib/tmp", version = "1.0.0" }
 
 [workspace.lints.rust.unexpected_cfgs]
 level = "warn"
+check-cfg = [
+        "cfg(polonius)"
+]
