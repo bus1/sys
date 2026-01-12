@@ -392,8 +392,9 @@ impl Element {
     /// Create a new element from its id. This is a simple transmute that does
     /// not modify the value.
     ///
-    /// SAFETY: `id` must be a valid element id gained from a call to
-    ///         `Self::id()`.
+    /// ## Safety
+    ///
+    /// `id` must be a valid element id gained from a call to `Self::id()`.
     pub const unsafe fn from_id(id: u8) -> Self {
         // SAFETY: The caller guarantees `id` was acquired via `Self::id()`,
         //         hence we can rely on `repr(u8)` to guarantee that we can
