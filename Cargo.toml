@@ -22,7 +22,7 @@ homepage = "https://www.bus1.eu"
 license = "MIT OR Apache-2.0 OR LGPL-2.1-or-later"
 readme = "README.md"
 repository = "https://github.com/bus1/sys"
-rust-version = "1.84"
+rust-version = "1.91"
 
 [workspace.dependencies]
 libc = { default-features = false, version = "0.2.175" }

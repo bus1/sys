@@ -15,7 +15,7 @@ project(
 add_languages('rust', native: false)
 
 rust_edition = '2021'
-rust_msv = '1.74'
+rust_msv = '1.91'
 
 mod_rust = import('rust')
 rust = meson.get_compiler('rust')
