@@ -30,6 +30,18 @@ osi = { path = "./lib/osi", version = "1.0.0" }
 sys = { path = "./lib/sys", version = "1.0.0" }
 tmp = { path = "./lib/tmp", version = "1.0.0" }
 
+[workspace.lints.clippy]
+assertions_on_constants = "allow"
+explicit_auto_deref = "allow"
+identity_op = "allow"
+inherent_to_string_shadow_display = "allow"
+len_zero = "allow"
+manual_range_contains = "allow"
+needless_late_init = "allow"
+new_without_default = "allow"
+should_implement_trait = "allow"
+redundant_field_names = "allow"
+
 [workspace.lints.rust.unexpected_cfgs]
 level = "warn"
 check-cfg = [
