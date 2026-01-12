@@ -75,6 +75,9 @@ jobs:
     - name: "Run Analyzer"
       run: cargo check ${CI_CARGO_ARGS}
 
+    - name: "Run Clippy"
+      run: cargo clippy ${CI_CARGO_ARGS}
+
   #
   # A complete but basic build of the project, running on common x86-64 ubuntu
   # machines. This should catch most compilation errors or test-suite failures
