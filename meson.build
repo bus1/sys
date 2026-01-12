@@ -93,10 +93,19 @@ endif
 use_std = get_option('std')
 
 #
+# Global configuration
+#
+
+rlib_rust_args = [
+        '--check-cfg=cfg(feature, values("libc", "std"))',
+        '--check-cfg=cfg(test)',
+]
+
+#
 # Target: libosi
 #
 
-libosi_rlib_rust_args = []
+libosi_rlib_rust_args = rlib_rust_args
 
 if use_std
         libosi_rlib_rust_args += ['--cfg=feature="std"']
@@ -120,7 +129,7 @@ meson.override_dependency('libosi-' + libosi_major, libosi_dep, static: true)
 #
 
 libsys_rlib_deps = [libosi_dep]
-libsys_rlib_rust_args = []
+libsys_rlib_rust_args = rlib_rust_args
 
 if use_libc
         libsys_rlib_deps += [dep_libc]
@@ -150,20 +159,18 @@ meson.override_dependency('libsys-' + libsys_major, libsys_dep, static: true)
 # Target: libtmp
 #
 
+libtmp_rlib_deps = [libosi_dep, libsys_dep]
+libtmp_rlib_rust_args = rlib_rust_args
+
 libtmp_rlib = static_library(
         'tmp',
         ['lib/tmp/src/lib.rs'],
-        dependencies: [
-                libosi_dep,
-                libsys_dep,
-        ],
+        dependencies: libtmp_rlib_deps,
+        rust_args: libtmp_rlib_rust_args,
 )
 
 libtmp_dep = declare_dependency(
-        dependencies: [
-                libosi_dep,
-                libsys_dep,
-        ],
+        dependencies: libtmp_rlib_deps,
         link_with: libtmp_rlib,
         version: libtmp_version,
 )
