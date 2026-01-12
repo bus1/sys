@@ -40,6 +40,11 @@ defaults:
 env:
   CC: clang
   CC_LD: lld
+  CI_CARGO_ARGS: >-
+    --all-features
+    --all-targets
+    --verbose
+    --workspace
   CI_MESON_ARGS: >-
     --buildtype debugoptimized
     --warnlevel 2
@@ -68,7 +73,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: "Run Analyzer"
-      run: cargo check --all-targets --features libc --verbose --workspace
+      run: cargo check ${CI_CARGO_ARGS}
 
   #
   # A complete but basic build of the project, running on common x86-64 ubuntu
@@ -89,7 +94,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: "Build and Test"
-      run: cargo test --all-targets --features libc --verbose --workspace
+      run: cargo test ${CI_CARGO_ARGS}
 
   #
   # A simple no-op job that serves as guard. All extended jobs depend on this
@@ -124,7 +129,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: "Build and Test"
-      run: cargo test --all-targets --features libc --verbose --workspace
+      run: cargo test ${CI_CARGO_ARGS}
 
   #
   # A matrix of project builds with different settings. All builds run the
@@ -146,8 +151,8 @@ jobs:
 
           # Explicitly set all options here to document them.
           cargoargs: >-
+            --all-features
             --all-targets
-            --features libc
             --profile=release
           image: "ghcr.io/readaheadeu/rae-ci-archlinux:latest"
           toolchain: stable
@@ -157,8 +162,8 @@ jobs:
           name: "Ubuntu-x86_64-nightly-release"
 
           cargoargs: >-
+            --all-features
             --all-targets
-            --features libc
             --profile=release
           image: "ghcr.io/readaheadeu/rae-ci-ubuntu:latest"
           toolchain: nightly
@@ -218,14 +223,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: "Build and Test"
-      run: |
-        cargo \
-          test \
-            --all-targets \
-            --features libc \
-            --target i686-unknown-linux-gnu \
-            --verbose \
-            --workspace
+      run: cargo test ${CI_CARGO_ARGS} --target i686-unknown-linux-gnu
 
   #
   # A development build using the meson build system.
