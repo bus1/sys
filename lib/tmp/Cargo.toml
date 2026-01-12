@@ -25,3 +25,6 @@ polonius = []
 [dependencies]
 osi = { workspace = true }
 sys = { workspace = true }
+
+[lints]
+workspace = true
