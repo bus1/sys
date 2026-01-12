@@ -35,12 +35,6 @@
 //     that these can be greatly optimized by the compiler, they seem a worthy
 //     fit for the standard library.
 
-#![allow(clippy::assertions_on_constants)]
-#![allow(clippy::identity_op)]
-#![allow(clippy::manual_range_contains)]
-#![allow(clippy::should_implement_trait)]
-#![allow(clippy::redundant_field_names)]
-
 #![no_std]
 
 extern crate alloc;

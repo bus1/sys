@@ -28,16 +28,13 @@ if rust.version().version_compare('<' + rust_msv)
         error('Found Rust ' + rust.version() + ' but requires >=' + rust_msv)
 endif
 
-cargo = find_program('cargo', native: true, required: true, version: '>=' + rust_msv)
-jq = find_program('jq', native: true, required: true, version: '>=1.6')
-
 #
 # Import cargo metadata
 #
 
 q = run_command(
         [
-                './lib/util/cargo-query.sh',
+                './lib/util/cargo-query.py',
 
                 # The script does not use any of these arguments, but meson
                 # thinks it does, and triggers a reconfiguration if they
@@ -51,15 +48,14 @@ q = run_command(
         capture: true,
         check: true,
         env: {
-                'BIN_CARGO': cargo.full_path(),
-                'BIN_JQ': jq.full_path(),
-                'PATH_CARGO_TOML': meson.current_source_dir() / 'Cargo.toml',
+                'PATH_WS': meson.current_source_dir(),
         },
 ).stdout().splitlines()
 
 libosi_version = q[0]
 libsys_version = q[1]
 libtmp_version = q[2]
+ws_lints = q[3]
 
 libosi_major = libosi_version.split('.')[0]
 libsys_major = libsys_version.split('.')[0]
@@ -101,6 +97,10 @@ rlib_rust_args = [
         '--check-cfg=cfg(polonius)',
         '--check-cfg=cfg(test)',
 ]
+
+foreach v: ws_lints.split(',')
+        rlib_rust_args += ['-A', v]
+endforeach
 
 #
 # Target: libosi
