@@ -249,3 +249,27 @@ jobs:
 
     - name: "Run Tests"
       run: meson test -C "./build"
+
+  #
+  # A development build using the MSRV. To avoid updating our own container
+  # images with that version all the time, use the official images for it.
+  # This means, we cannot rely on any other utilities to be present, so just
+  # run a straight cargo build.
+  #
+  ext_msrv:
+    name: "Ext: msrv @ rust:<msrv>"
+    needs: ext_guard
+
+    container:
+      image: "rust:1.91-alpine"
+    defaults:
+      run:
+        shell: "sh"
+    runs-on: "ubuntu-latest"
+
+    steps:
+    - name: "Fetch Sources"
+      uses: actions/checkout@v4
+
+    - name: "Build and Test"
+      run: cargo test ${CI_CARGO_ARGS}
