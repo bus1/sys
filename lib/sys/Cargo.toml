@@ -20,6 +20,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [features]
+libc = ["dep:libc"]
 std = []
 
 [dependencies]
