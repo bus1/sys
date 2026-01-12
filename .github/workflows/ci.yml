@@ -174,13 +174,13 @@ jobs:
           name: "Ubuntu-x86_64-nightly-polonius"
 
           cargoargs: >-
+            --all-features
             --all-targets
-            --features libc
             --profile=release
           image: "ghcr.io/readaheadeu/rae-ci-ubuntu:latest"
           rustflags: >-
             --cfg polonius
-            -Z polonius
+            -Z polonius=next
           toolchain: nightly
 
     container:
