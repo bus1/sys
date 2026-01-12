@@ -156,6 +156,7 @@ struct ElementMeta {
     gvar_size: u8,
 }
 
+#[allow(clippy::too_many_arguments)]
 const fn element(
     code: u8,
     element: Element,
