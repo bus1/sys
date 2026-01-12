@@ -794,7 +794,7 @@ mod test {
             assert!(!v.all(FLAG_OPEN | FLAG_CLOSE));
             // ...has FLAG_OPEN or FLAG_CLOSE if it has a pair.
             assert!(
-                !v.pair().is_some()
+                v.pair().is_none()
                 || v.any(FLAG_OPEN | FLAG_CLOSE)
             );
             // ...has FLAG_CLOSE only if it has a pair.

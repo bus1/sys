@@ -27,21 +27,21 @@
 //! D-Bus type-system. These might not be well defined outside of this module.
 //!
 //! - *element*: An element is a single ASCII character that can be used in
-//!       a type signature. This can either refer to a primitive type, or be
-//!       part of a compound type signature. Hence, not all elements are
-//!       valid types by themselves, but might only be valid in combination
-//!       with other elements as part of a signature.
+//!   a type signature. This can either refer to a primitive type, or be
+//!   part of a compound type signature. Hence, not all elements are
+//!   valid types by themselves, but might only be valid in combination
+//!   with other elements as part of a signature.
 //! - *primitive type*: A type with signature length of 1 is called a
-//!       primitive type.
+//!   primitive type.
 //! - *compound type*: A non-primitive type is called a compound type.
 //! - *bound container*: A bound container has an opening element, but no
-//!       closing element and thus forms a compound type with its following
-//!       single complete type.
+//!   closing element and thus forms a compound type with its following
+//!   single complete type.
 //! - *unbound container*: An unbound container has both an opening and
-//!       closing element and thus forms a compound type with all its
-//!       enclosed types.
+//!   closing element and thus forms a compound type with all its
+//!   enclosed types.
 //! - *DVariant*: The D-Bus type encoding as introduced in the original D-Bus
-//!       specification v0.8.
+//!   specification v0.8.
 //! - *GVariant*: The D-Bus type encoding as introduced by glib.
 
 // NB: This implementation avoids several standard Rust interfaces, because
@@ -170,14 +170,14 @@ enum NodeRef<'node> {
 /// representations. The following representations are used by this module:
 ///
 ///   - `Sig<[u64]>`: This is the default representation, which can also be
-///         referenced as `Sig`. It is a dynamically sized type (DST) and is
-///         thus usually used behind a reference as `&Sig`.
-///         This representation is used by default for any function that
-///         required access to a D-Bus Signature.
+///     referenced as `Sig`. It is a dynamically sized type (DST) and is
+///     thus usually used behind a reference as `&Sig`.
+///     This representation is used by default for any function that
+///     required access to a D-Bus Signature.
 ///   - `Sig<[u64; N]>: This is a statically sized representation used to
-///         create signatures on the stack. It uses const-generics to encode
-///         the size of the data buffer.
-///         This representation is used by default to create literals.
+///     create signatures on the stack. It uses const-generics to encode
+///     the size of the data buffer.
+///     This representation is used by default to create literals.
 #[repr(transparent)]
 pub struct Sig<Nodes: ?Sized = [u64]> {
     nodes: Nodes,
@@ -334,6 +334,7 @@ impl<'node> NodeRef<'node> {
 macro_rules!
     impl_node
 { ($node:ty, $int:ty, $id:expr) => {
+    #[allow(clippy::modulo_one)]
     impl $node {
         const ID: u8 = $id;
         const SIZE_COEFF: usize = mem::size_of::<Self>() / mem::size_of::<u64>();
@@ -692,6 +693,7 @@ macro_rules!
 impl_node!(Node8, u8, 0);
 impl_node!(Node64, u64, 3);
 
+#[allow(clippy::len_without_is_empty)]
 impl Sig {
     /// Calculate the required signature data buffer size given a signature
     /// length.
@@ -705,9 +707,9 @@ impl Sig {
     /// otherwise.
     #[doc(hidden)]
     pub const fn size_for_length(length: usize) -> usize {
-        assert!(mem::size_of::<Node8>() % mem::size_of::<u64>() == 0);
+        assert!(mem::size_of::<Node8>().is_multiple_of(mem::size_of::<u64>()));
         assert!(mem::align_of::<Node8>() <= mem::align_of::<u64>());
-        assert!(mem::size_of::<Node64>() % mem::size_of::<u64>() == 0);
+        assert!(mem::size_of::<Node64>().is_multiple_of(mem::size_of::<u64>()));
         assert!(mem::align_of::<Node64>() <= mem::align_of::<u64>());
 
         if length <= Node8::LENGTH_MAX {
@@ -858,7 +860,7 @@ impl Sig {
             Some(mem::transmute::<&[u64], &Self>(
                 // Use `split_at()` rather than range-indexing, since the
                 // latter is not available in const-fn.
-                &self.nodes
+                self.nodes
                     .split_at(idx.strict_mul(coeff)).1
                     .split_at(len.strict_mul(coeff)).0
             ))
@@ -910,7 +912,12 @@ impl<const SIZE: usize> Sig<[u64; SIZE]> {
         // MSRV(unknown): This is available upstream as `transpose()` in
         //     `feature(maybe_uninit_uninit_array_transpose)` (#96097).
         buf = mem::MaybeUninit::uninit();
-        buf_v = unsafe { mem::transmute(&mut buf) };
+        buf_v = unsafe {
+            mem::transmute::<
+                &mut mem::MaybeUninit<[u64; SIZE]>,
+                &mut [mem::MaybeUninit<u64>; SIZE],
+            >(&mut buf)
+        };
 
         match Sig::<[u64]>::parse(buf_v, signature) {
             // SAFETY: `Sig::parse()` always initializes the entire data
@@ -1193,7 +1200,7 @@ where
     /// `None`.
     pub fn dvar_alignment_exp(&self) -> Option<u8> {
         self.flags_at(self.idx)
-            .and_then(|v| Some(v.dvar_alignment_exp()))
+            .map(|v| v.dvar_alignment_exp())
     }
 
     /// Return the GVar alignment exponent at the current index.
@@ -1205,7 +1212,7 @@ where
     /// `None`.
     pub fn gvar_alignment_exp(&self) -> Option<u8> {
         self.flags_at(self.idx)
-            .and_then(|v| Some(v.gvar_alignment_exp()))
+            .map(|v| v.gvar_alignment_exp())
     }
 }
 
@@ -1305,12 +1312,7 @@ impl core::cmp::PartialEq for Sig {
 
 impl core::cmp::PartialOrd for Sig {
     fn partial_cmp(&self, v: &Self) -> Option<core::cmp::Ordering> {
-        // Sort by code to ensure stable order.
-        self.into_iter()
-            .map(|v| v.code())
-            .partial_cmp(
-                v.into_iter().map(|v| v.code()),
-            )
+        Some(self.cmp(v))
     }
 }
 

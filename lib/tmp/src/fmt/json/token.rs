@@ -419,27 +419,24 @@ impl<'read> Dec<'read> {
         let map = self.read.map_while(
             &mut self.inner.idx,
             None,
-            |_, v| match v {
-                b' ' | b'\n' | b'\r' | b'\t' => true,
-                _ => false,
-            },
+            |_, v| matches!(v, b' ' | b'\n' | b'\r' | b'\t'),
         )?;
         self.inner.done = Some(self.inner.idx);
-        return Flow::Continue(Some(self.inner.raise_whitespace(&map[..self.inner.idx])));
+        Flow::Continue(Some(self.inner.raise_whitespace(&map[..self.inner.idx])))
     }
 
     fn advance_item(&mut self) -> Flow<io::stream::More, Option<Token<'_>>> {
         let map = self.read.map_while(
             &mut self.inner.idx,
             None,
-            |_, v| match v {
+            |_, v| matches!(
+                v,
                 b'+' | b'-' | b'.' | b'0'..=b'9'
-                | b'a'..=b'z' | b'A'..=b'Z' => true,
-                _ => false,
-            },
+                | b'a'..=b'z' | b'A'..=b'Z',
+            ),
         )?;
         self.inner.done = Some(self.inner.idx);
-        return Flow::Continue(Some(self.inner.raise_item(&map[..self.inner.idx])));
+        Flow::Continue(Some(self.inner.raise_item(&map[..self.inner.idx])))
     }
 
     fn advance_number(&mut self) -> Flow<io::stream::More, Option<Token<'_>>> {
@@ -556,10 +553,7 @@ impl<'read> Dec<'read> {
                 let map = self.read.map_while(
                     &mut self.inner.idx,
                     None,
-                    |_, v| match v {
-                        b'"' | b'\\' | 0x00..0x1f => false,
-                        _ => true,
-                    },
+                    |_, v| !matches!(v, b'"' | b'\\' | 0x00..0x1f),
                 )?;
 
                 match map[self.inner.idx] {
@@ -624,13 +618,11 @@ impl<'read> Dec<'read> {
 
             State::StringEscapeUnicode { idx_start } => {
                 let max = idx_start.strict_add(4);
+                #[allow(clippy::manual_is_ascii_check)]
                 let map = self.read.map_while(
                     &mut self.inner.idx,
                     Some(max),
-                    |_, v| match v {
-                        b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F' => true,
-                        _ => false,
-                    },
+                    |_, v| matches!(v, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F'),
                 )?;
 
                 if self.inner.idx != idx_start.strict_add(4) {
@@ -680,14 +672,14 @@ impl<'read> Dec<'read> {
                 let map = self.read.map_while(
                     &mut self.inner.idx,
                     Some(max),
-                    |idx, v| match (idx.strict_sub(idx_start), v) {
-                        (0, b'\\') | (1, b'u') => true,
-                        (
+                    |idx, v| matches!(
+                        (idx.strict_sub(idx_start), v),
+                        (0, b'\\') | (1, b'u')
+                        | (
                             2..=5,
                             b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F'
-                        ) => true,
-                        _ => false,
-                    },
+                        ),
+                    ),
                 )?;
 
                 if self.inner.idx != idx_start.strict_add(6) {
@@ -831,7 +823,9 @@ impl<'read> Dec<'read> {
                     (polonius) { v },
                     {
                         // SAFETY: Workaround for NLL, unneeded with Polonius.
-                        unsafe { core::mem::transmute(v) }
+                        unsafe {
+                            core::mem::transmute::<Token<'_>, Token<'this>>(v)
+                        }
                     },
                 }
             };

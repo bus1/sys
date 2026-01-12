@@ -234,7 +234,7 @@ impl<'this> dyn Read + 'this {
     }
 }
 
-impl<'data> Read for &'data [u8] {
+impl Read for &[u8] {
     fn advance(&mut self, len: usize) {
         let v = core::mem::take(self);
         *self = &v[len..];
@@ -302,7 +302,7 @@ mod test {
 
         // Discard the previous temporary values and rewrite the next 16 values
         // again starting at 0 and immediately commit it.
-        let _ = vec.write(
+        vec.write(
             &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         ).continue_value().unwrap();
 
