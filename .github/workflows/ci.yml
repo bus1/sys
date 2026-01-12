@@ -163,9 +163,26 @@ jobs:
           image: "ghcr.io/readaheadeu/rae-ci-ubuntu:latest"
           toolchain: nightly
 
+        # Test a nightly build with polonius, verifying the code that works
+        # around deficiencies of non-polonius builds.
+        - id: "polonius"
+          name: "Ubuntu-x86_64-nightly-polonius"
+
+          cargoargs: >-
+            --all-targets
+            --features libc
+            --profile=release
+          image: "ghcr.io/readaheadeu/rae-ci-ubuntu:latest"
+          rustflags: >-
+            --cfg polonius
+            -Z polonius
+          toolchain: nightly
+
     container:
       image: ${{ matrix.image }}
       options: "--user root"
+    env:
+      RUSTFLAGS: ${{ matrix.rustflags }}
     runs-on: "ubuntu-latest"
 
     steps:
