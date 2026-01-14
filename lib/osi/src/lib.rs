@@ -37,11 +37,13 @@
 
 #![no_std]
 
-extern crate alloc;
-extern crate core;
-
 #[cfg(any(test, feature = "std"))]
 extern crate std;
+
+// Used by macros via `$crate::{alloc,core}::*`, explicitly part of the public
+// API. Usually of little use to code outside of this crate, though.
+pub extern crate alloc;
+pub extern crate core;
 
 pub mod align;
 pub mod args;
