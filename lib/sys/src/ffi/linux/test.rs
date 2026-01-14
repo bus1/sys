@@ -12,15 +12,19 @@ use native as libc;
 
 // Compare two `const` definitions for equality. This will compare their type
 // layout and memory content for equality.
-fn eq_def_const<A, B>(a: &A, b: &B) -> bool {
-    core::mem::size_of::<A>() == core::mem::size_of::<B>()
-    && core::mem::align_of::<A>() == core::mem::align_of::<B>()
-    && osi::mem::eq(a, b)
+unsafe fn eq_def_const<A, B>(a: &A, b: &B) -> bool {
+    // SAFETY: Propagated to caller.
+    unsafe {
+        core::mem::size_of::<A>() == core::mem::size_of::<B>()
+        && core::mem::align_of::<A>() == core::mem::align_of::<B>()
+        && osi::mem::eq(a, b)
+    }
 }
 
 // A 3-way variant of `eq_def_const()`.
-fn eq3_def_const<A, B, C>(a: &A, b: &B, c: &C) -> bool {
-    eq_def_const(a, b) && eq_def_const(a, c)
+unsafe fn eq3_def_const<A, B, C>(a: &A, b: &B, c: &C) -> bool {
+    // SAFETY: Propagated to caller.
+    unsafe { eq_def_const(a, b) && eq_def_const(a, c) }
 }
 
 // Verify that all supported platforms are available, by simply checking that
@@ -37,5 +41,7 @@ fn platform_availability() {
 // Compare target APIs with native and libc APIs, and verify they match.
 #[test]
 fn comparison() {
-    assert!(eq3_def_const(&target::errno::EPERM, &native::errno::EPERM, &libc::errno::EPERM));
+    unsafe {
+        assert!(eq3_def_const(&target::errno::EPERM, &native::errno::EPERM, &libc::errno::EPERM));
+    }
 }
