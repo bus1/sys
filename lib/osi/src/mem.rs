@@ -182,14 +182,16 @@ pub const fn slice_as_uninit<'a, T>(v: &'a [T]) -> &'a [Uninit<T>] {
 
 /// Alias a type as a byte slice.
 ///
-/// This function allows accessing any type as a slice of bytes. This is safe
-/// for all types. However, the content of padding bytes is neither well
-/// defined nor stable.
-pub const fn as_bytes<'a, T>(v: &'a T) -> &'a [u8] {
-    // SAFETY: We retain the allocation size of `T` and its lifetime. Hence,
-    //         the transmute is safe for as long as `'a`. Since `v` is
-    //         borrowed, we prevent mutable access for the entire lifetime of
-    //         the returned value.
+/// This function allows accessing any type as a slice of bytes.
+///
+/// ## Safety
+///
+/// The caller must guarantee that:
+///
+/// - `T` has no padding bytes, and all bytes of `v` belong to the type `T.
+///   This implies that all bytes in `v` are initialized.
+pub const unsafe fn as_bytes<'a, T>(v: &'a T) -> &'a [u8] {
+    // SAFETY: Propagated to caller.
     unsafe {
         core::slice::from_raw_parts::<'a, u8>(
             v as *const _ as *const _,
@@ -206,15 +208,15 @@ pub const fn as_bytes<'a, T>(v: &'a T) -> &'a [u8] {
 ///
 /// ## Safety
 ///
-/// Like [`as_bytes()`], this can be safely called on any type. However, unlike
-/// [`as_bytes()`], this function grants mutable access and thus any mutable
-/// use of the returned reference must guarantee not to violate any invariants
-/// of `T`.
+/// The caller must guarantee that:
+///
+/// - `T` has no padding bytes, and all bytes of `v` belong to the type `T.
+///   This implies that all bytes in `v` are initialized.
+/// - Any bit sequence in `v` produces a valid value of type `T`. This
+///   guarantees that no use of the returned reference ever produces invalid
+///   values.
 pub const unsafe fn as_bytes_mut<'a, T>(v: &'a mut T) -> &'a mut [u8] {
-    // SAFETY: We retain the allocation size of `T` and its lifetime. Hence,
-    //         the transmute is safe for as long as `'a`. Since `v` is
-    //         borrowed, we claim mutable access for the entire lifetime of
-    //         the returned value.
+    // SAFETY: Propagated to caller.
     unsafe {
         core::slice::from_raw_parts_mut::<'a, u8>(
             v as *mut _ as *mut _,
@@ -227,9 +229,18 @@ pub const unsafe fn as_bytes_mut<'a, T>(v: &'a mut T) -> &'a mut [u8] {
 ///
 /// Compare the backing memory of two values for equality. Return `true` if the
 /// memory compares equal, false if not. Note that all memory must compare
-/// equal, including padding bytes (which have no guaranteed nor stable value).
-pub fn eq<A, B>(a: &A, b: &B) -> bool {
-    *as_bytes(a) == *as_bytes(b)
+/// equal.
+///
+/// ## Safety
+///
+/// The caller must guarantee that:
+///
+/// - `A` and `B` have no padding bytes, and all bytes of `a` and `b` belong to
+///   their respective type. This implies that all bytes in `a` and `b` are
+///   initialized.
+pub unsafe fn eq<A, B>(a: &A, b: &B) -> bool {
+    // SAFETY: Propagated to caller.
+    unsafe { *as_bytes(a) == *as_bytes(b) }
 }
 
 #[cfg(test)]
@@ -312,18 +323,18 @@ mod test {
     fn byte_alias() {
         let mut v: u16 = 0xf0f0;
 
-        assert_eq!(as_bytes(&v)[0], 0xf0);
-        assert_eq!(as_bytes(&v)[1], 0xf0);
-
         unsafe {
+            assert_eq!(as_bytes(&v)[0], 0xf0);
+            assert_eq!(as_bytes(&v)[1], 0xf0);
+
             as_bytes_mut(&mut v)[0] = 0x0f;
             as_bytes_mut(&mut v)[1] = 0x0f;
+
+            assert_eq!(as_bytes(&v)[0], 0x0f);
+            assert_eq!(as_bytes(&v)[1], 0x0f);
+
+            assert_eq!(v, 0x0f0f);
         }
-
-        assert_eq!(as_bytes(&v)[0], 0x0f);
-        assert_eq!(as_bytes(&v)[1], 0x0f);
-
-        assert_eq!(v, 0x0f0f);
     }
 
     // Verify byte-wise equality
@@ -331,11 +342,13 @@ mod test {
     fn byte_eq() {
         let v: u16 = 0xf0f0;
 
-        assert!(eq(&v, &0xf0f0u16));
-        assert!(eq(&v, &[0xf0u8, 0xf0u8]));
+        unsafe {
+            assert!(eq(&v, &0xf0f0u16));
+            assert!(eq(&v, &[0xf0u8, 0xf0u8]));
 
-        assert!(!eq(&v, &0x00f0u16));
-        assert!(!eq(&v, &0xf0f0u32));
-        assert!(!eq(&v, &[0xf0u16, 0xf0u16]));
+            assert!(!eq(&v, &0x00f0u16));
+            assert!(!eq(&v, &0xf0f0u32));
+            assert!(!eq(&v, &[0xf0u16, 0xf0u16]));
+        }
     }
 }
