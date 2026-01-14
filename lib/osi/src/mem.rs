@@ -10,11 +10,11 @@ use core::mem::transmute_copy;
 macro_rules! crate_mem_typed_offset_of {
     ($container:ty, $field:ident, $ty:ty $(,)?) => {
         const {
-            let v = ::core::mem::MaybeUninit::<$container>::uninit();
+            let v = $crate::core::mem::MaybeUninit::<$container>::uninit();
             let _: *const $ty = unsafe {
                 &raw const ((*v.as_ptr()).$field)
             };
-            ::core::mem::offset_of!($container, $field)
+            $crate::core::mem::offset_of!($container, $field)
         }
     }
 }
