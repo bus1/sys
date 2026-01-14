@@ -3,6 +3,7 @@
 //! This module contains functions to help dealing with direct memory
 //! manipulation and inspection.
 
+use core::mem::MaybeUninit as Uninit;
 use core::mem::transmute_copy;
 
 #[doc(hidden)]
@@ -85,7 +86,7 @@ pub const unsafe fn transmute_copy_uninit<Src, Dst>(src: &Src) -> Dst {
         //
         // SAFETY: Delegated to the caller.
         unsafe {
-            let mut dst = core::mem::MaybeUninit::<Dst>::uninit();
+            let mut dst = Uninit::<Dst>::uninit();
             copy_unaligned(
                 src as *const Src,
                 dst.as_mut_ptr() as *mut Src,
@@ -114,7 +115,7 @@ pub const unsafe fn transmute_copy_uninit<Src, Dst>(src: &Src) -> Dst {
 // This is the slow-path that manually iterates the individual bytes, but works
 // with any data-type, as long as the data-type stays valid with swapped bytes.
 const unsafe fn bswap_slow<T>(v: &T) -> T {
-    let mut r = core::mem::MaybeUninit::<T>::uninit();
+    let mut r = Uninit::<T>::uninit();
     let src = v as *const T as *const u8;
     let dst = r.as_mut_ptr() as *mut u8;
 
@@ -156,6 +157,26 @@ pub const unsafe fn bswap_copy<T>(v: &T) -> T {
             16 => transmute_copy(&u128::swap_bytes(transmute_copy(v))),
             _ => bswap_slow(v),
         }
+    }
+}
+
+/// Alias a type as a [`MaybeUninit`](core::mem::MaybeUninit).
+///
+/// Any type can be aliased as a possibly uninitialized type. This is usually
+/// only necessary when providing initialized data to code that can handle
+/// possibly uninitialized data.
+pub const fn as_uninit<'a, T>(v: &'a T) -> &'a Uninit<T> {
+    unsafe {
+        core::mem::transmute::<&T, &Uninit<T>>(v)
+    }
+}
+
+/// Alias a slice as a [`MaybeUninit`](core::mem::MaybeUninit).
+///
+/// This works like [`as_uninit()`] but for slices of `T`.
+pub const fn slice_as_uninit<'a, T>(v: &'a [T]) -> &'a [Uninit<T>] {
+    unsafe {
+        core::mem::transmute::<&[T], &[Uninit<T>]>(v)
     }
 }
 
@@ -268,6 +289,22 @@ mod test {
             assert_eq!(bswap_copy(&0x00112233445566778899101112131415u128), 0x15141312111099887766554433221100u128);
             assert_eq!(bswap_copy(&[0x00u8, 0x11u8, 0x22u8]), [0x22u8, 0x11u8, 0x00u8]);
         }
+    }
+
+    // Verify uninit aliasing
+    #[test]
+    fn uninit_alias() {
+        let v: u16 = 0xf0f0;
+
+        assert_eq!(v, 0xf0f0);
+        assert_eq!(unsafe { *as_uninit(&v).as_ptr() }, 0xf0f0);
+
+        let v: [u16; 2] = [0xf0, 0xf1];
+
+        assert_eq!(v[0], 0xf0);
+        assert_eq!(v[1], 0xf1);
+        assert_eq!(unsafe { *slice_as_uninit(&v)[0].as_ptr() }, 0xf0);
+        assert_eq!(unsafe { *slice_as_uninit(&v)[1].as_ptr() }, 0xf1);
     }
 
     // Verify byte aliasing
