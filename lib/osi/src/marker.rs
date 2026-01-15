@@ -3,6 +3,18 @@
 //! A selection of meta traits and types to encode the intrinsic properties
 //! of user types.
 
+/// Phantom marker to ensure the calling context is unsafe.
+///
+/// This function is a no-op, but asserts that the context of the caller must
+/// be within an `unsafe` block. It can be used by macros to assert that the
+/// macro is unsafe.
+///
+/// ## Safety
+///
+/// This function is always safe to call.
+pub const unsafe fn phantom_unsafe() {
+}
+
 /// Zero-sized type used to mark a type parameter as invariant.
 ///
 /// Types that are both passed as an argument _and_ used as part of the return
