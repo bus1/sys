@@ -180,6 +180,60 @@ pub const fn slice_as_uninit<'a, T>(v: &'a [T]) -> &'a [Uninit<T>] {
     }
 }
 
+/// Alias a [`MaybeUninit`](core::mem::MaybeUninit) type as initialized.
+///
+/// ## Safety
+///
+/// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
+/// in an initialized state. Calling this when the content is not yet fully
+/// initialized causes immediate undefined behavior.
+pub const unsafe fn assume_init<'a, T>(v: &'a Uninit<T>) -> &'a T {
+    unsafe {
+        core::mem::transmute::<&Uninit<T>, &T>(v)
+    }
+}
+
+/// Mutably alias a [`MaybeUninit`](core::mem::MaybeUninit) type as
+/// initialized.
+///
+/// ## Safety
+///
+/// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
+/// in an initialized state. Calling this when the content is not yet fully
+/// initialized causes immediate undefined behavior.
+pub const unsafe fn assume_init_mut<'a, T>(v: &'a mut Uninit<T>) -> &'a mut T {
+    unsafe {
+        core::mem::transmute::<&mut Uninit<T>, &mut T>(v)
+    }
+}
+
+/// Alias a slice of [`MaybeUninit`](core::mem::MaybeUninit) as initialized.
+///
+/// ## Safety
+///
+/// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
+/// in an initialized state. Calling this when the content is not yet fully
+/// initialized causes immediate undefined behavior.
+pub const unsafe fn slice_assume_init<'a, T>(v: &'a [Uninit<T>]) -> &'a [T] {
+    unsafe {
+        core::mem::transmute::<&[Uninit<T>], &[T]>(v)
+    }
+}
+
+/// Mutably alias a slice of [`MaybeUninit`](core::mem::MaybeUninit) as
+/// initialized.
+///
+/// ## Safety
+///
+/// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
+/// in an initialized state. Calling this when the content is not yet fully
+/// initialized causes immediate undefined behavior.
+pub const unsafe fn slice_assume_init_mut<'a, T>(v: &'a mut [Uninit<T>]) -> &'a mut [T] {
+    unsafe {
+        core::mem::transmute::<&mut [Uninit<T>], &mut [T]>(v)
+    }
+}
+
 /// Alias a type as a byte slice.
 ///
 /// This function allows accessing any type as a slice of bytes.
@@ -302,13 +356,14 @@ mod test {
         }
     }
 
-    // Verify uninit aliasing
+    // Verify uninit/init aliasing
     #[test]
-    fn uninit_alias() {
+    fn uninit_init_alias() {
         let v: u16 = 0xf0f0;
 
         assert_eq!(v, 0xf0f0);
         assert_eq!(unsafe { *as_uninit(&v).as_ptr() }, 0xf0f0);
+        assert_eq!(unsafe { *assume_init(as_uninit(&v)) }, 0xf0f0);
 
         let v: [u16; 2] = [0xf0, 0xf1];
 
@@ -316,6 +371,8 @@ mod test {
         assert_eq!(v[1], 0xf1);
         assert_eq!(unsafe { *slice_as_uninit(&v)[0].as_ptr() }, 0xf0);
         assert_eq!(unsafe { *slice_as_uninit(&v)[1].as_ptr() }, 0xf1);
+        assert_eq!(unsafe { slice_assume_init(slice_as_uninit(&v))[0] }, 0xf0);
+        assert_eq!(unsafe { slice_assume_init(slice_as_uninit(&v))[1] }, 0xf1);
     }
 
     // Verify byte aliasing
