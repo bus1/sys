@@ -66,3 +66,4 @@ pub mod pin;
 pub mod polonius;
 pub mod ptr;
 pub mod str;
+pub mod test;
