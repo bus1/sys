@@ -65,5 +65,6 @@ pub mod never;
 pub mod pin;
 pub mod polonius;
 pub mod ptr;
+pub mod rng;
 pub mod str;
 pub mod test;
