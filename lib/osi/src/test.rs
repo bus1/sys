@@ -126,6 +126,7 @@ impl<T: ?Sized> core::default::Default for InvariantType<T> {
     }
 }
 
+#[allow(clippy::module_inception)]
 #[cfg(test)]
 mod test {
     use super::*;
