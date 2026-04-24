@@ -41,6 +41,37 @@ pub struct SplitMix64 {
     gamma: u64,
 }
 
+/// Random Number Generator using Xoshiro256++.
+///
+/// This is the state of the Xoshiro256++ pseudo random number generator. It
+/// uses 256-bit of state and generates 64-bit random numbers. This PRNG is
+/// **not** cryptgraphically secure, but is otherwise a good fit for nearly
+/// all purposes.
+///
+/// This implements `Clone` and `Copy` for verbatim copies. Use
+/// [`jump128()`](Self::jump128) to produce non-verbatim copies with better
+/// random distribution.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Xoshiro256pp {
+    state: [u64; 4],
+}
+
+// Static calculation of the first few values from Mix64(0). The array is
+// statically verified to contain no 0 values (which sufficiently resolves
+// non-0 seeding requirements of some RNGs).
+const MIX64_0: [u64; 4] = {
+    let mut mix = Mix64::with_seed(0);
+    let v = [mix.next64(); 4];
+
+    let mut i = 0;
+    while i < v.len() {
+        assert!(v[i] != 0);
+        i += 1;
+    }
+
+    v
+};
+
 impl Mix64 {
     const GAMMA: u64 = 0x9e3779b97f4a7c15;
 
@@ -168,6 +199,125 @@ impl From<Mix64> for SplitMix64 {
     }
 }
 
+impl Xoshiro256pp {
+    const fn combine(s: &[u64; 4]) -> u64 {
+        s[0].wrapping_add(s[3])
+            .rotate_left(23)
+            .wrapping_add(s[0])
+    }
+
+    const fn step(s: &mut [u64; 4]) {
+        let t = s[1] << 17;
+
+        s[2] ^= s[0];
+        s[3] ^= s[1];
+        s[1] ^= s[2];
+        s[0] ^= s[3];
+
+        s[2] ^= t;
+        s[3] = s[3].rotate_left(45);
+    }
+
+    const fn jump(s: &mut [u64; 4], jump_table: &[u64; 4]) {
+        let mut t = [0; 4];
+
+        let mut i = 0;
+        while i < 4 {
+            let mut j = 0;
+            while j < 64 {
+                if (jump_table[i] & (1 << j)) != 0 {
+                    t[0] ^= s[0];
+                    t[1] ^= s[1];
+                    t[2] ^= s[2];
+                    t[3] ^= s[3];
+                }
+                Self::step(s);
+                j += 1;
+            }
+            i += 1;
+        }
+
+        *s = t;
+    }
+
+    // Steps 2^128 times, using pre-calculated jump tables.
+    const fn step128(s: &mut [u64; 4]) {
+        Self::jump(
+            s,
+            &[
+                0x180ec6d33cfd0aba,
+                0xd5a61266f0c9392c,
+                0xa9582618e03fc9aa,
+                0x39abdc4529b1661c,
+            ],
+        )
+    }
+
+    // Steps 2^192 times, using pre-calculated jump tables.
+    const fn step192(s: &mut [u64; 4]) {
+        Self::jump(
+            s,
+            &[
+                0x76e15d3efefdcbbf,
+                0xc5004e441c522fb3,
+                0x77710069854ee241,
+                0x39109bb02acbe635,
+            ],
+        )
+    }
+
+    /// Create a new instance with the given seed.
+    ///
+    /// The seed is used unmodified as the internal state of the Xoshiro256++
+    /// RNG, and thus will produce the same results as other implementations
+    /// with this seed (except if the seed is 0, described below).
+    ///
+    /// A seed of all 0 is not allowed for Xoshiro256++. This implementation
+    /// maps a seed of all 0 to `Self::from_splitmix64(0)`.
+    pub const fn with_seed(seed: [u64; 4]) -> Self {
+        if seed[0] == 0 && seed[1] == 0 && seed[2] == 0 && seed[3] == 0 {
+            Self {
+                state: MIX64_0,
+            }
+        } else {
+            Self {
+                state: seed,
+            }
+        }
+    }
+
+    /// Create a new instance from a SplitMix64.
+    ///
+    /// Use the [`SplitMix64`] instance to seed the 256-bit of state of a new
+    /// RNG instance.
+    pub const fn from_splitmix64(mix: &mut SplitMix64) -> Self {
+        Self::with_seed([mix.next64(); 4])
+    }
+
+    /// Produce the next 64-bit random number.
+    pub const fn next64(&mut self) -> u64 {
+        let r = Self::combine(&self.state);
+        Self::step(&mut self.state);
+        r
+    }
+
+    /// Jump over the next 2^128 random numbers.
+    pub const fn jump128(&mut self) {
+        Self::step128(&mut self.state);
+    }
+
+    /// Jump over the next 2^192 random numbers.
+    pub const fn jump192(&mut self) {
+        Self::step192(&mut self.state);
+    }
+}
+
+impl From<SplitMix64> for Xoshiro256pp {
+    fn from(mut v: SplitMix64) -> Self {
+        Self::from_splitmix64(&mut v)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -227,6 +377,33 @@ mod test {
 
             assert_eq!(SplitMix64::from_mix64(rng0), rng1);
             assert_eq!(rng0.split(), rng1.split());
+        }
+    }
+
+    // Run some known-value-tests on Xoshiro256pp.
+    #[test]
+    fn xoshiro256pp_known() {
+        {
+            let mut rng0 = Xoshiro256pp::with_seed([1, 2, 3, 4]);
+
+            assert_eq!(rng0.next64(), 41943041);
+            assert_eq!(rng0.next64(), 58720359);
+            assert_eq!(rng0.next64(), 3588806011781223);
+            assert_eq!(rng0.next64(), 3591011842654386);
+
+            rng0.jump128();
+
+            assert_eq!(rng0.next64(), 10838999831620499216);
+            assert_eq!(rng0.next64(), 8680420094678800874);
+            assert_eq!(rng0.next64(), 9570055643283944810);
+            assert_eq!(rng0.next64(), 7079802948504130534);
+
+            rng0.jump192();
+
+            assert_eq!(rng0.next64(), 7229965972965062926);
+            assert_eq!(rng0.next64(), 2140690761664815708);
+            assert_eq!(rng0.next64(), 5733913562642225265);
+            assert_eq!(rng0.next64(), 10699737370828579003);
         }
     }
 }
