@@ -76,7 +76,7 @@ jobs:
       run: cargo check ${CI_CARGO_ARGS}
 
     - name: "Run Clippy"
-      run: cargo clippy ${CI_CARGO_ARGS}
+      run: cargo clippy ${CI_CARGO_ARGS} -- --deny=warnings
 
   #
   # A complete but basic build of the project, running on common x86-64 ubuntu
