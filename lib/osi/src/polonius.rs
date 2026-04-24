@@ -71,7 +71,7 @@ mod test {
     // the function returned a value that is not dependent on the lifetime.
     #[test]
     fn coerce_loop_return() {
-        fn get<'a>(v: &'a mut (u16,)) -> Option<&'a u16> {
+        fn get(v: &mut (u16,)) -> Option<&u16> {
             if v.0 == 0 {
                 Some(&v.0)
             } else {
