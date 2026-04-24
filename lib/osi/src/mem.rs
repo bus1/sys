@@ -165,7 +165,7 @@ pub const unsafe fn bswap_copy<T>(v: &T) -> T {
 /// Any type can be aliased as a possibly uninitialized type. This is usually
 /// only necessary when providing initialized data to code that can handle
 /// possibly uninitialized data.
-pub const fn as_uninit<'a, T>(v: &'a T) -> &'a Uninit<T> {
+pub const fn as_uninit<T>(v: &T) -> &Uninit<T> {
     unsafe {
         core::mem::transmute::<&T, &Uninit<T>>(v)
     }
@@ -174,7 +174,7 @@ pub const fn as_uninit<'a, T>(v: &'a T) -> &'a Uninit<T> {
 /// Alias a slice as a [`MaybeUninit`](core::mem::MaybeUninit).
 ///
 /// This works like [`as_uninit()`] but for slices of `T`.
-pub const fn slice_as_uninit<'a, T>(v: &'a [T]) -> &'a [Uninit<T>] {
+pub const fn slice_as_uninit<T>(v: &[T]) -> &[Uninit<T>] {
     unsafe {
         core::mem::transmute::<&[T], &[Uninit<T>]>(v)
     }
@@ -187,7 +187,7 @@ pub const fn slice_as_uninit<'a, T>(v: &'a [T]) -> &'a [Uninit<T>] {
 /// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
 /// in an initialized state. Calling this when the content is not yet fully
 /// initialized causes immediate undefined behavior.
-pub const unsafe fn assume_init<'a, T>(v: &'a Uninit<T>) -> &'a T {
+pub const unsafe fn assume_init<T>(v: &Uninit<T>) -> &T {
     unsafe {
         core::mem::transmute::<&Uninit<T>, &T>(v)
     }
@@ -201,7 +201,7 @@ pub const unsafe fn assume_init<'a, T>(v: &'a Uninit<T>) -> &'a T {
 /// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
 /// in an initialized state. Calling this when the content is not yet fully
 /// initialized causes immediate undefined behavior.
-pub const unsafe fn assume_init_mut<'a, T>(v: &'a mut Uninit<T>) -> &'a mut T {
+pub const unsafe fn assume_init_mut<T>(v: &mut Uninit<T>) -> &mut T {
     unsafe {
         core::mem::transmute::<&mut Uninit<T>, &mut T>(v)
     }
@@ -214,7 +214,7 @@ pub const unsafe fn assume_init_mut<'a, T>(v: &'a mut Uninit<T>) -> &'a mut T {
 /// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
 /// in an initialized state. Calling this when the content is not yet fully
 /// initialized causes immediate undefined behavior.
-pub const unsafe fn slice_assume_init<'a, T>(v: &'a [Uninit<T>]) -> &'a [T] {
+pub const unsafe fn slice_assume_init<T>(v: &[Uninit<T>]) -> &[T] {
     unsafe {
         core::mem::transmute::<&[Uninit<T>], &[T]>(v)
     }
@@ -228,7 +228,7 @@ pub const unsafe fn slice_assume_init<'a, T>(v: &'a [Uninit<T>]) -> &'a [T] {
 /// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
 /// in an initialized state. Calling this when the content is not yet fully
 /// initialized causes immediate undefined behavior.
-pub const unsafe fn slice_assume_init_mut<'a, T>(v: &'a mut [Uninit<T>]) -> &'a mut [T] {
+pub const unsafe fn slice_assume_init_mut<T>(v: &mut [Uninit<T>]) -> &mut [T] {
     unsafe {
         core::mem::transmute::<&mut [Uninit<T>], &mut [T]>(v)
     }
