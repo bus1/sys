@@ -46,7 +46,7 @@ impl Mix64 {
 
     // Computes the 32 high bits of Stafford variant 4 mix64 function:
     // - http://zimbry.blogspot.com/2011/09/better-bit-mixing-improving-on.html
-    fn mix32(mut v: u64) -> u32 {
+    const fn mix32(mut v: u64) -> u32 {
         v = (v ^ (v >> 33)).wrapping_mul(0x62a9d9ed799705f5);
         v = (v ^ (v >> 28)).wrapping_mul(0xcb24d0a5c88c35b3);
         (v >> 32) as u32
@@ -54,7 +54,7 @@ impl Mix64 {
 
     // Computes Stafford variant 13 mix64 function:
     // - http://zimbry.blogspot.com/2011/09/better-bit-mixing-improving-on.html
-    fn mix64(mut v: u64) -> u64 {
+    const fn mix64(mut v: u64) -> u64 {
         v = (v ^ (v >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
         v = (v ^ (v >> 27)).wrapping_mul(0x94d049bb133111eb);
         v ^ (v >> 31)
@@ -63,7 +63,7 @@ impl Mix64 {
     // Returns the gamma value to use for a new split instance. Uses the 64bit
     // mix function from MurmurHash3:
     // - https://github.com/aappleby/smhasher/wiki/MurmurHash3
-    fn mixg(mut v: u64) -> u64 {
+    const fn mixg(mut v: u64) -> u64 {
         v = (v ^ (v >> 33)).wrapping_mul(0xff51afd7ed558ccd);
         v = (v ^ (v >> 33)).wrapping_mul(0xc4ceb9fe1a85ec53);
         v = (v ^ (v >> 33)) | 1;
@@ -79,31 +79,31 @@ impl Mix64 {
     /// The seed is used unmodified as the internal state of the SplitMix64
     /// RNG, and thus will produce the same results as other SplitMix64
     /// implementations with this seed.
-    pub fn with_seed(seed: u64) -> Self {
+    pub const fn with_seed(seed: u64) -> Self {
         Self {
             state: seed,
         }
     }
 
-    fn step(&mut self, gamma: u64) -> u64 {
+    const fn step(&mut self, gamma: u64) -> u64 {
         self.state = self.state.wrapping_add(gamma);
         self.state
     }
 
     /// Produce the next 32-bit random number.
-    pub fn next32(&mut self) -> u32 {
+    pub const fn next32(&mut self) -> u32 {
         Mix64::mix32(self.step(Self::GAMMA))
     }
 
     /// Produce the next 64-bit random number.
-    pub fn next64(&mut self) -> u64 {
+    pub const fn next64(&mut self) -> u64 {
         Mix64::mix64(self.step(Self::GAMMA))
     }
 
     /// Split this random number generator in two.
     ///
     /// Works like [`SplitMix64::split()`].
-    pub fn split(&mut self) -> SplitMix64 {
+    pub const fn split(&mut self) -> SplitMix64 {
         SplitMix64::with(
             Mix64::mix64(self.step(Self::GAMMA)),
             Mix64::mixg(self.step(Self::GAMMA)),
@@ -112,7 +112,7 @@ impl Mix64 {
 }
 
 impl SplitMix64 {
-    fn with(seed: u64, gamma: u64) -> Self {
+    const fn with(seed: u64, gamma: u64) -> Self {
         Self {
             mix: Mix64::with_seed(seed),
             gamma: gamma,
@@ -124,22 +124,22 @@ impl SplitMix64 {
     /// The seed is used unmodified as the internal state of the Mix64
     /// RNG, and thus will produce the same results as other Mix64
     /// implementations with this seed.
-    pub fn with_seed(seed: u64) -> Self {
+    pub const fn with_seed(seed: u64) -> Self {
         Self::with(seed, Mix64::GAMMA)
     }
 
     /// Create a new instance from an unsplit `Mix64`.
-    pub fn from_mix64(v: Mix64) -> Self {
+    pub const fn from_mix64(v: Mix64) -> Self {
         Self::with(v.state, Mix64::GAMMA)
     }
 
     /// Produce the next 32-bit random number.
-    pub fn next32(&mut self) -> u32 {
+    pub const fn next32(&mut self) -> u32 {
         Mix64::mix32(self.mix.step(self.gamma))
     }
 
     /// Produce the next 64-bit random number.
-    pub fn next64(&mut self) -> u64 {
+    pub const fn next64(&mut self) -> u64 {
         Mix64::mix64(self.mix.step(self.gamma))
     }
 
@@ -154,7 +154,7 @@ impl SplitMix64 {
     /// splitting.
     ///
     /// The state of the original RNG is the same as if it was advanced twice.
-    pub fn split(&mut self) -> Self {
+    pub const fn split(&mut self) -> Self {
         Self::with(
             Mix64::mix64(self.mix.step(self.gamma)),
             Mix64::mixg(self.mix.step(self.gamma)),
