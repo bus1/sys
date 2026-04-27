@@ -15,6 +15,10 @@
 //     if the self-type was shown, or there was another way to quickly jump to
 //     it via an anchor.
 //
+// - rustdoc pub-use: There is currently no way to document `pub use`
+//     statements. Given how FFI modules in `sys` export aliases, documenting
+//     those would be great.
+//
 // - rustfmt optout: There is no global opt-out for rustfmt. While individual
 //     items can be annotated with `#[rustfmt::skip]`, the root module of a
 //     crate cannot be annotated like this (NB: inner attributes like
