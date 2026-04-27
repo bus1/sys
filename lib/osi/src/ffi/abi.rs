@@ -97,6 +97,36 @@ pub mod native {
     pub use super::shared::*;
 }
 
+/// # System-V aarch64 ABI
+///
+/// This ABI represents the 64-bit ABI of System-V for aarch64 systems. It is
+/// used by most UNIX compatible systems, including Linux.
+pub mod aarch64_sysv {
+    use crate::align;
+
+    pub type I8 = super::Le<i8, align::AlignAs<1>>;
+    pub type I16 = super::Le<i16, align::AlignAs<2>>;
+    pub type I32 = super::Le<i32, align::AlignAs<4>>;
+    pub type I64 = super::Le<i64, align::AlignAs<8>>;
+    pub type I128 = super::Le<i128, align::AlignAs<16>>;
+    pub type Isize = super::Le<i64, align::AlignAs<8>>;
+
+    pub type U8 = super::Le<u8, align::AlignAs<1>>;
+    pub type U16 = super::Le<u16, align::AlignAs<2>>;
+    pub type U32 = super::Le<u32, align::AlignAs<4>>;
+    pub type U64 = super::Le<u64, align::AlignAs<8>>;
+    pub type U128 = super::Le<u128, align::AlignAs<16>>;
+    pub type Usize = super::Le<u64, align::AlignAs<8>>;
+
+    pub type F32 = super::Le<f32, align::AlignAs<4>>;
+    pub type F64 = super::Le<f64, align::AlignAs<8>>;
+
+    pub type Addr = super::Le<core::num::NonZeroU64, align::AlignAs<8>>;
+    pub type Ptr<Target> = crate::ffi::Pointer<Addr, Target>;
+
+    pub use super::shared::*;
+}
+
 /// # System-V x86 ABI
 ///
 /// This ABI represents the 32-bit ABI of System-V for x86 systems. It is used
