@@ -44,7 +44,8 @@ type Le<Native, Alignment> = crate::ffi::Integer<
 
 // This module is imported by all ABIs and provides default symbols valid on
 // all targets.
-mod shared {
+#[doc(hidden)]
+pub mod shared {
     /// Creates a number by converting the input value from native
     /// representation into the representation of the target type.
     ///
