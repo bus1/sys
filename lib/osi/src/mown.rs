@@ -15,8 +15,7 @@
 /// ## Similarity to Cow
 ///
 /// This type is almost identical to [`Cow`](alloc::borrow::Cow), but does not
-/// require [`Clone`](core::clone::Clone) or any kind of support for
-/// mutability.
+/// require [`Clone`] or any kind of support for mutability.
 pub enum Mown<'a, B: ?Sized, O = &'a B> {
     Borrowed(&'a B),
     Owned(O),
