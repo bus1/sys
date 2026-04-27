@@ -1,4 +1,4 @@
-// Platform Module for x86_64
+// Platform Module for aarch64
 //
 // This module is included multiple times by `../mod.rs`, using outer
 // comments for documentation. It is also the responsibility of the caller
