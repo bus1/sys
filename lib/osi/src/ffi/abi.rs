@@ -16,7 +16,7 @@
 //! to get a native Rust experience. This is suitable if foreign data access
 //! is not needed.
 //!
-//! [`auto`] is an alias of one of the other ABIs and represents the target
+//! [`target`] is an alias of one of the other ABIs and represents the target
 //! platform. Unlike [`native`], this does not necessarily use native Rust
 //! data-types, but is a real alias to one of the other fixed definitions of
 //! platform ABIs.
@@ -188,27 +188,33 @@ pub mod x86_64_sysv {
 }
 
 #[cfg(all(
+    target_arch = "aarch64",
+    target_family = "unix",
+))]
+pub use aarch64_sysv as target;
+
+#[cfg(all(
     target_arch = "x86",
     target_family = "unix",
 ))]
-pub use x86_sysv as auto;
+pub use x86_sysv as target;
 
 #[cfg(all(
     target_arch = "x86_64",
     target_family = "unix",
 ))]
-pub use x86_64_sysv as auto;
+pub use x86_64_sysv as target;
 
 #[cfg(all(
     target_arch = "x86",
     target_env = "msvc",
     target_family = "windows",
 ))]
-pub use x86_win as auto;
+pub use x86_win as target;
 
 #[cfg(all(
     target_arch = "x86_64",
     target_env = "msvc",
     target_family = "windows",
 ))]
-pub use x86_64_win as auto;
+pub use x86_64_win as target;
