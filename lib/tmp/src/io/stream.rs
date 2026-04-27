@@ -31,7 +31,7 @@ pub struct More {
 /// layers. That is, it allows writing code that reads structured data from a
 /// data stream without knowing the transport layer used to stream the data.
 ///
-/// The trait is similar to [`std::io::Read`] but is designed for buffered
+/// The trait is similar to `std::io::Read` but is designed for buffered
 /// streams that perform transport layer operations 
 ///
 /// The actual transport layer operations are not part of this trait, but must
@@ -78,7 +78,7 @@ pub trait Read {
 /// layers. That is, it allows writing code that writes structured data to a
 /// data stream without knowing the transport layer used to stream the data.
 ///
-/// The trait is similar to [`std::io::Write`] but is designed for buffered
+/// The trait is similar to `std::io::Write` but is designed for buffered
 /// streams that perform transport layer operations 
 ///
 /// The actual transport layer operations are not part of this trait, but must

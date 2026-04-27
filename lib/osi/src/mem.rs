@@ -160,7 +160,7 @@ pub const unsafe fn bswap_copy<T>(v: &T) -> T {
     }
 }
 
-/// Alias a type as a [`MaybeUninit`](core::mem::MaybeUninit).
+/// Alias a type as a [`Uninit`].
 ///
 /// Any type can be aliased as a possibly uninitialized type. This is usually
 /// only necessary when providing initialized data to code that can handle
@@ -171,7 +171,7 @@ pub const fn as_uninit<T>(v: &T) -> &Uninit<T> {
     }
 }
 
-/// Alias a slice as a [`MaybeUninit`](core::mem::MaybeUninit).
+/// Alias a slice as a [`Uninit`].
 ///
 /// This works like [`as_uninit()`] but for slices of `T`.
 pub const fn slice_as_uninit<T>(v: &[T]) -> &[Uninit<T>] {
@@ -180,11 +180,11 @@ pub const fn slice_as_uninit<T>(v: &[T]) -> &[Uninit<T>] {
     }
 }
 
-/// Alias a [`MaybeUninit`](core::mem::MaybeUninit) type as initialized.
+/// Alias a [`Uninit`] type as initialized.
 ///
 /// ## Safety
 ///
-/// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
+/// It is up to the caller to guarantee that the [`Uninit<T>`] really is
 /// in an initialized state. Calling this when the content is not yet fully
 /// initialized causes immediate undefined behavior.
 pub const unsafe fn assume_init<T>(v: &Uninit<T>) -> &T {
@@ -193,12 +193,11 @@ pub const unsafe fn assume_init<T>(v: &Uninit<T>) -> &T {
     }
 }
 
-/// Mutably alias a [`MaybeUninit`](core::mem::MaybeUninit) type as
-/// initialized.
+/// Mutably alias a [`Uninit`] type as initialized.
 ///
 /// ## Safety
 ///
-/// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
+/// It is up to the caller to guarantee that the [`Uninit<T>`] really is
 /// in an initialized state. Calling this when the content is not yet fully
 /// initialized causes immediate undefined behavior.
 pub const unsafe fn assume_init_mut<T>(v: &mut Uninit<T>) -> &mut T {
@@ -207,11 +206,11 @@ pub const unsafe fn assume_init_mut<T>(v: &mut Uninit<T>) -> &mut T {
     }
 }
 
-/// Alias a slice of [`MaybeUninit`](core::mem::MaybeUninit) as initialized.
+/// Alias a slice of [`Uninit`] as initialized.
 ///
 /// ## Safety
 ///
-/// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
+/// It is up to the caller to guarantee that the [`Uninit<T>`] really is
 /// in an initialized state. Calling this when the content is not yet fully
 /// initialized causes immediate undefined behavior.
 pub const unsafe fn slice_assume_init<T>(v: &[Uninit<T>]) -> &[T] {
@@ -220,12 +219,11 @@ pub const unsafe fn slice_assume_init<T>(v: &[Uninit<T>]) -> &[T] {
     }
 }
 
-/// Mutably alias a slice of [`MaybeUninit`](core::mem::MaybeUninit) as
-/// initialized.
+/// Mutably alias a slice of [`Uninit`] as initialized.
 ///
 /// ## Safety
 ///
-/// It is up to the caller to guarantee that the [`MaybeUninit<T>`] really is
+/// It is up to the caller to guarantee that the [`Uninit<T>`] really is
 /// in an initialized state. Calling this when the content is not yet fully
 /// initialized causes immediate undefined behavior.
 pub const unsafe fn slice_assume_init_mut<T>(v: &mut [Uninit<T>]) -> &mut [T] {
