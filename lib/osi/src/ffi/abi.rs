@@ -138,14 +138,14 @@ pub mod x86_sysv {
     pub type I16 = super::Le<i16, align::AlignAs<2>>;
     pub type I32 = super::Le<i32, align::AlignAs<4>>;
     pub type I64 = super::Le<i64, align::AlignAs<4>>;
-    pub type I128 = super::Le<i128, align::AlignAs<4>>;
+    pub type I128 = super::Le<i128, align::AlignAs<16>>;
     pub type Isize = super::Le<i32, align::AlignAs<4>>;
 
     pub type U8 = super::Le<u8, align::AlignAs<1>>;
     pub type U16 = super::Le<u16, align::AlignAs<2>>;
     pub type U32 = super::Le<u32, align::AlignAs<4>>;
     pub type U64 = super::Le<u64, align::AlignAs<4>>;
-    pub type U128 = super::Le<u128, align::AlignAs<4>>;
+    pub type U128 = super::Le<u128, align::AlignAs<16>>;
     pub type Usize = super::Le<u32, align::AlignAs<4>>;
 
     pub type F32 = super::Le<f32, align::AlignAs<4>>;
