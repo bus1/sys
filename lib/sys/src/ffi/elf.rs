@@ -959,20 +959,27 @@ mod test {
         assert_eq!(size_of::<elf64::Rel>(), size_of::<libc::Elf64_Rel>());
         assert_eq!(size_of::<elf64::Rela>(), size_of::<libc::Elf64_Rela>());
 
-        assert_eq!(align_of::<elf32::Ehdr>(), align_of::<libc::Elf32_Ehdr>());
-        assert_eq!(align_of::<elf32::Shdr>(), align_of::<libc::Elf32_Shdr>());
-        assert_eq!(align_of::<elf32::Phdr>(), align_of::<libc::Elf32_Phdr>());
-        assert_eq!(align_of::<elf32::Sym>(), align_of::<libc::Elf32_Sym>());
-        assert_eq!(align_of::<elf32::Dyn>(), 4);
-        assert_eq!(align_of::<elf32::Rel>(), align_of::<libc::Elf32_Rel>());
-        assert_eq!(align_of::<elf32::Rela>(), align_of::<libc::Elf32_Rela>());
-
-        assert_eq!(align_of::<elf64::Ehdr>(), align_of::<libc::Elf64_Ehdr>());
-        assert_eq!(align_of::<elf64::Shdr>(), align_of::<libc::Elf64_Shdr>());
-        assert_eq!(align_of::<elf64::Phdr>(), align_of::<libc::Elf64_Phdr>());
-        assert_eq!(align_of::<elf64::Sym>(), align_of::<libc::Elf64_Sym>());
-        assert_eq!(align_of::<elf64::Dyn>(), 8);
-        assert_eq!(align_of::<elf64::Rel>(), align_of::<libc::Elf64_Rel>());
-        assert_eq!(align_of::<elf64::Rela>(), align_of::<libc::Elf64_Rela>());
+        // `libc` does not align foreign types correctly. Run the test only on
+        // a native platform.
+        osi::cfg::cond! {
+            (target_pointer_width = "32") {
+                assert_eq!(align_of::<elf32::Ehdr>(), align_of::<libc::Elf32_Ehdr>());
+                assert_eq!(align_of::<elf32::Shdr>(), align_of::<libc::Elf32_Shdr>());
+                assert_eq!(align_of::<elf32::Phdr>(), align_of::<libc::Elf32_Phdr>());
+                assert_eq!(align_of::<elf32::Sym>(), align_of::<libc::Elf32_Sym>());
+                assert_eq!(align_of::<elf32::Dyn>(), 4);
+                assert_eq!(align_of::<elf32::Rel>(), align_of::<libc::Elf32_Rel>());
+                assert_eq!(align_of::<elf32::Rela>(), align_of::<libc::Elf32_Rela>());
+            },
+            (target_pointer_width = "64") {
+                assert_eq!(align_of::<elf64::Ehdr>(), align_of::<libc::Elf64_Ehdr>());
+                assert_eq!(align_of::<elf64::Shdr>(), align_of::<libc::Elf64_Shdr>());
+                assert_eq!(align_of::<elf64::Phdr>(), align_of::<libc::Elf64_Phdr>());
+                assert_eq!(align_of::<elf64::Sym>(), align_of::<libc::Elf64_Sym>());
+                assert_eq!(align_of::<elf64::Dyn>(), 8);
+                assert_eq!(align_of::<elf64::Rel>(), align_of::<libc::Elf64_Rel>());
+                assert_eq!(align_of::<elf64::Rela>(), align_of::<libc::Elf64_Rela>());
+            },
+        }
     }
 }
