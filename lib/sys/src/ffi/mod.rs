@@ -70,4 +70,5 @@
 //! as suffix instead (e.g., `elf32`, `elf64`, `elfn`, where the latter is the
 //! equivalent of _"native"_).
 
+pub mod elf;
 pub mod linux;
