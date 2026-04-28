@@ -1,4 +1,4 @@
-// Common Linux Definitions
+// # Common Linux Definitions
 //
 // This module provides a common implementation of the vast majority of Linux
 // system interfaces. It is meant to be used by the platform-modules via:
