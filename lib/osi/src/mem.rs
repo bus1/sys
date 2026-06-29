@@ -337,7 +337,7 @@ mod test {
         assert_eq!(s, 71);
         assert_eq!(o.v, 71);
         assert_eq!(or, 71);
-        assert_eq!(u.v as u16, 71); // prevent the macro from creating a ref
+        assert!(u.v == 71); // prevent the macro from creating a ref
         assert_eq!(ur, 71);
     }
 
