@@ -940,7 +940,10 @@ mod test {
     }
 
     // Compare the ELF structures to their libc counterparts.
-    #[cfg(feature = "libc")]
+    //
+    // Only run on `x86_64`, since libc symbols are not available on all
+    // platforms.
+    #[cfg(all(feature = "libc", target_arch = "x86_64"))]
     #[test]
     fn compare_libc() {
         assert_eq!(size_of::<elf32::Ehdr>(), size_of::<libc::Elf32_Ehdr>());
