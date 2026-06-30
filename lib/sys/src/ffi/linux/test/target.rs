@@ -1,14 +1,22 @@
-//! # Tests for the Linux FFI Definitions
+//! # Target Tests for the Linux FFI Definitions
 //!
-//! This module contains tests for all exported FFI definitions of the
+//! This sub-module contains tests for the `target` and `native` aliases of the
 //! `ffi::linux` module.
 //!
-//! Currently, tests are only run if `libc` is enabled. This simplifies the
-//! test setup and allows testing against known libc values.
+//! The tests are only run when a `target`, `native`, and `libc` is available.
 
-#![cfg(all(test, feature = "libc"))]
+#![cfg(
+    all(
+        feature = "libc",
+        any(
+            target_arch = "aarch64",
+            target_arch = "x86",
+            target_arch = "x86_64",
+        ),
+    )
+)]
 
-use super::*;
+use crate::ffi::linux::*;
 
 // Compare two type definitions for equality.
 fn eq_def_type<A, B>() -> bool {
@@ -38,14 +46,13 @@ unsafe fn eq3_def_const<A, B, C>(a: &A, b: &B, c: &C) -> bool {
     unsafe { eq_def_const(a, b) && eq_def_const(a, c) }
 }
 
-// Verify that all supported platforms are available, by simply checking that
-// they expose `abi::U16`.
+// Verify that `target` and `native` platforms are available, again by simply
+// checking that they expose `abi::U16`.
+//
+// Other platform availability is checked by `platform_availability()` in the
+// test module.
 #[test]
-fn platform_availability() {
-    assert_eq!(core::mem::size_of::<libc::abi::U16>(), 2);
-    assert_eq!(core::mem::size_of::<aarch64::abi::U16>(), 2);
-    assert_eq!(core::mem::size_of::<x86::abi::U16>(), 2);
-    assert_eq!(core::mem::size_of::<x86_64::abi::U16>(), 2);
+fn target_native_availability() {
     assert_eq!(core::mem::size_of::<target::abi::U16>(), 2);
     assert_eq!(core::mem::size_of::<native::abi::U16>(), 2);
 }
