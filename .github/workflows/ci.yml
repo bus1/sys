@@ -209,6 +209,29 @@ jobs:
             ${{ matrix.cargoargs }}
 
   #
+  # A release build running on an unsupported platform. All supported features
+  # are enabled and the full test suite is run.
+  #
+  # For now we pick Sparc64, since this has `cross` and `linux` support, but is
+  # very unlikely to ever gain support of this package.
+  #
+  ext_cross_unsupported:
+    name: "Ext: cross-unsupported @ Ubuntu-latest"
+    needs: ext_guard
+
+    runs-on: "ubuntu-latest"
+
+    steps:
+    - name: "Fetch Sources"
+      uses: actions/checkout@v4
+
+    - name: "Install cross-rs"
+      run: cargo install cross
+
+    - name: "Build and Test"
+      run: cross test ${CI_CARGO_ARGS} --target sparc64-unknown-linux-gnu
+
+  #
   # A release build running on i686. All supported features are enabled and the
   # full test suite is run.
   #
