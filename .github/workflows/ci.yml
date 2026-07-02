@@ -70,7 +70,7 @@ jobs:
 
     steps:
     - name: "Fetch Sources"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: "Run Analyzer"
       run: cargo check ${CI_CARGO_ARGS}
@@ -94,7 +94,7 @@ jobs:
 
     steps:
     - name: "Fetch Sources"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: "Build and Test"
       run: cargo test ${CI_CARGO_ARGS}
@@ -129,7 +129,7 @@ jobs:
 
     steps:
     - name: "Fetch Sources"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: "Build and Test"
       run: cargo test ${CI_CARGO_ARGS}
@@ -195,7 +195,7 @@ jobs:
 
     steps:
     - name: "Fetch Sources"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: "Configure Rust Toolchain"
       run: rustup default "${{ matrix.toolchain }}"
@@ -223,7 +223,7 @@ jobs:
 
     steps:
     - name: "Fetch Sources"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: "Install cross-rs"
       run: cargo install cross
@@ -246,7 +246,7 @@ jobs:
 
     steps:
     - name: "Fetch Sources"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: "Build and Test"
       run: cargo test ${CI_CARGO_ARGS} --target i686-unknown-linux-gnu
@@ -265,7 +265,7 @@ jobs:
 
     steps:
     - name: "Fetch Sources"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: "Setup Meson"
       run: meson setup ${CI_MESON_ARGS} ./build .
@@ -295,7 +295,7 @@ jobs:
 
     steps:
     - name: "Fetch Sources"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: "Build and Test"
       run: cargo test ${CI_CARGO_ARGS}
